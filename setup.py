@@ -6,10 +6,13 @@ setup_requires = (
     'pytest-runner',
     )
 install_requires = (
+    'cnx-litezip',
+    'requests',
     'venusian',
     )
 tests_require = [
     'pytest',
+    'requests-mock',
     ]
 extras_require = {
     'test': tests_require,
