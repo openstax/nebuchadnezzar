@@ -65,3 +65,19 @@ def test_get_cmd_with_existing_output_dir(tmpcwd, capsys):
 
     out, err = capsys.readouterr()
     assert 'output directory cannot exist:' in out
+
+
+def test_get_cmd_with_failed_request(requests_mocker, capsys):
+    col_id = 'col00000'
+    url = 'http://legacy.cnx.org/content/{}/latest/complete'.format(col_id)
+
+    requests_mocker.register_uri('GET', url, status_code=404)
+
+    from nebu.cli.main import main
+    args = ['get', col_id]
+    return_code = main(args)
+
+    assert return_code == 4
+
+    out, err = capsys.readouterr()
+    assert "content unavailable for '{}'".format(col_id) in out

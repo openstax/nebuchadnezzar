@@ -43,7 +43,10 @@ def get_cmd(args_namespace):
 
     resp = requests.get(url)
 
-    # TODO check for request failure
+    if not resp:
+        logger.error("content unavailable for '{}'".format(col_id))
+        logger.debug("response code is {}".format(resp.status_code))
+        return 4
 
     with zip_filepath.open('wb') as f:
         f.write(resp.content)
