@@ -37,7 +37,9 @@ def get_cmd(args_namespace):
     else:
         output_dir = Path(output_dir)
 
-    # TODO check if the output dir exists already
+    if output_dir.exists():
+        logger.error("output directory cannot exist:  {}".format(output_dir))
+        return 3
 
     resp = requests.get(url)
 

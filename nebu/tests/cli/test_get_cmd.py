@@ -50,3 +50,18 @@ def test_get_cmd(datadir, tmpcwd, requests_mocker):
     relative_dir = map(partial(_rel, b=dir), pathlib_walk(dir))
     relative_expected = map(partial(_rel, b=expected), pathlib_walk(expected))
     assert sorted(relative_dir) == sorted(relative_expected)
+
+
+def test_get_cmd_with_existing_output_dir(tmpcwd, capsys):
+    col_id = 'col00000'
+
+    (tmpcwd / col_id).mkdir()
+
+    from nebu.cli.main import main
+    args = ['get', col_id]
+    return_code = main(args)
+
+    assert return_code == 3
+
+    out, err = capsys.readouterr()
+    assert 'output directory cannot exist:' in out
