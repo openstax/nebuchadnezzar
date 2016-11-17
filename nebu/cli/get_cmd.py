@@ -2,10 +2,12 @@
 import shutil
 import tempfile
 import zipfile
+from contextlib import contextmanager
 from pathlib import Path
 
 import requests
 from litezip import convert_completezip
+from progressbar import Bar, FileTransferSpeed, Percentage, ProgressBar
 
 from ..logger import logger
 from .discovery import register_subcommand
@@ -19,6 +21,16 @@ def get_parser(parser):
                         help="collection version")
     parser.add_argument('-d', '--output-dir',
                         help="output directory name (can't previously exist)")
+
+
+@contextmanager
+def progress_bar(id, size):
+    widgets = [id, ": ", Bar(marker="|", left="[", right="]"),
+               Percentage(), " at ",  FileTransferSpeed(), " ",
+               " of {0}MB".format(str(round(size / 1024 / 1024, 2))[:4])]
+    pbar = ProgressBar(widgets=widgets, maxval=size).start()
+    yield pbar
+    pbar.finish()
 
 
 @register_subcommand('get', get_parser)
@@ -41,15 +53,22 @@ def get_cmd(args_namespace):
         logger.error("output directory cannot exist:  {}".format(output_dir))
         return 3
 
-    resp = requests.get(url)
+    resp = requests.get(url, stream=True)
 
     if not resp:
         logger.error("content unavailable for '{}'".format(col_id))
         logger.debug("response code is {}".format(resp.status_code))
         return 4
 
-    with zip_filepath.open('wb') as f:
-        f.write(resp.content)
+    content_size = int(resp.headers['Content-Length'].strip())
+    bytes_ = 0
+    _progress_bar = progress_bar(col_id, content_size)
+    with _progress_bar as pbar, zip_filepath.open('wb') as fb:
+        for buffer_ in resp.iter_content(1024):
+            if buffer_:
+                fb.write(buffer_)
+                bytes_ += len(buffer_)
+                pbar.update(bytes_)
 
     with zipfile.ZipFile(str(zip_filepath), 'r') as zip:
         zip.extractall(str(tmp_dir))
