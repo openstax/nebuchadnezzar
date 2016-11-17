@@ -6,10 +6,16 @@ setup_requires = (
     'pytest-runner',
     )
 install_requires = (
+    'cnx-litezip',
+    # FIXME progressbar33 is a fork of progressbar. Let's see if we can't
+    #       align the universe.
+    'progressbar33',
+    'requests',
     'venusian',
     )
 tests_require = [
     'pytest',
+    'requests-mock',
     ]
 extras_require = {
     'test': tests_require,
