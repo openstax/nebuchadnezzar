@@ -2,6 +2,13 @@
 Change Log
 ==========
 
+?.?.?
+-----
+
+- Fix 'get' for 'latest' content by requesting the 'head' version. This will
+  give us the latest publication regardless of the public state of the
+  content.
+
 3.1.0
 -----
 

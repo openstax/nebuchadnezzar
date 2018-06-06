@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 import io
 import zipfile
@@ -226,12 +227,20 @@ class TestGetCmd:
     def test(self, datadir, tmpcwd, requests_mocker, invoker):
         col_id = 'col11405'
         col_version = '1.19'
-        base_url = 'https://legacy.cnx.org/content/{}'.format(col_id)
-        get_version_url = '{}/latest/getVersion'.format(base_url)
-        completezip_url = '{}/{}/complete'.format(base_url, col_version)
+        base_url = 'https://cnx.org/api/collections/{}'.format(col_id)
+        base_legacy_url = 'https://legacy.cnx.org/content/{}'.format(col_id)
+        version_url = '{}/head'.format(base_url)
+        completezip_url = '{}/{}/complete'.format(
+            base_legacy_url,
+            col_version,
+        )
 
-        # Register the getVersion request
-        requests_mocker.get(get_version_url, text=col_version)
+        # Register the head version request
+        versioned_location = '{}/{}'.format(base_legacy_url, col_version)
+        requests_mocker.get(
+            version_url,
+            headers={'location': versioned_location},
+        )
 
         # Register the completezip request
         complete_zip = datadir / 'complete.zip'
@@ -274,12 +283,13 @@ class TestGetCmd:
 
         assert 'directory already exists:' in result.output
 
-    def test_failed_request_using_latest(self, requests_mocker, invoker):
+    def test_failed_request_using_head_or_latest(
+            self, requests_mocker, invoker):
         col_id = 'col00000'
-        base_url = 'https://legacy.cnx.org/content/{}'.format(col_id)
-        get_version_url = '{}/latest/getVersion'.format(base_url)
+        base_url = 'https://cnx.org/api/collections/{}'.format(col_id)
+        version_url = '{}/head'.format(base_url)
 
-        requests_mocker.register_uri('GET', get_version_url, status_code=404)
+        requests_mocker.register_uri('GET', version_url, status_code=404)
 
         from nebu.cli.main import cli
         args = ['get', 'test-env', col_id]
@@ -287,7 +297,7 @@ class TestGetCmd:
 
         assert result.exit_code == 4
 
-        msg = "content unavailable for '{}/latest'".format(col_id)
+        msg = "content unavailable for '{}/head'".format(col_id)
         assert msg in result.output
 
     def test_failed_request_using_version(self, requests_mocker, invoker):
@@ -312,12 +322,20 @@ class TestGetCmd:
         # has not been produced.
         col_id = 'col00000'
         col_version = '1.19'
-        base_url = 'https://legacy.cnx.org/content/{}'.format(col_id)
-        get_version_url = '{}/latest/getVersion'.format(base_url)
-        completezip_url = '{}/{}/complete'.format(base_url, col_version)
+        base_url = 'https://cnx.org/api/collections/{}'.format(col_id)
+        base_legacy_url = 'https://legacy.cnx.org/content/{}'.format(col_id)
+        version_url = '{}/head'.format(base_url)
+        completezip_url = '{}/{}/complete'.format(
+            base_legacy_url,
+            col_version,
+        )
 
-        # Register the getVersion request
-        requests_mocker.get(get_version_url, text=col_version)
+        # Register the head version request
+        versioned_location = '{}/{}'.format(base_legacy_url, col_version)
+        requests_mocker.get(
+            version_url,
+            headers={'location': versioned_location},
+        )
 
         requests_mocker.get(completezip_url, status_code=204)
 

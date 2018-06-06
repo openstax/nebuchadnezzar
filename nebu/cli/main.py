@@ -6,7 +6,7 @@ import sys
 import tempfile
 import zipfile
 from pathlib import Path
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse, urlsplit, urlunparse
 
 import click
 import requests
@@ -129,7 +129,7 @@ def cli(ctx, verbose):
               help="output directory name (can't previously exist)")
 @click.argument('env')
 @click.argument('col_id')
-@click.argument('col_version', default='latest')
+@click.argument('col_version', default='head')
 @click.pass_context
 def get(ctx, env, col_id, col_version, output_dir):
     """download and expand the completezip to the current working directory"""
@@ -146,29 +146,36 @@ def get(ctx, env, col_id, col_version, output_dir):
 
     # Build the base url
     base_url = get_base_url(ctx, env)
-    parsed_url = urlparse(base_url)
-    sep = len(parsed_url.netloc.split('.')) > 2 and '-' or '.'
-    url_parts = [
-        parsed_url.scheme,
-        'legacy{}{}'.format(sep, parsed_url.netloc),
-    ] + list(parsed_url[2:])
-    base_url = urlunparse(url_parts)
 
-    if col_version == 'latest':
+    # Build the url to the completezip
+    if col_version in ('latest', 'head'):
         # See https://github.com/Connexions/nebuchadnezzar/issues/44
         # Acquire the specific version of the completezip
         logger.debug("Requesting a specific version for {}".format(col_id))
-        url = '{}/content/{}/latest/getVersion'.format(base_url, col_id)
-        resp = requests.get(url)
+        url = '{}/api/collections/{}/{}'.format(base_url, col_id, col_version)
+        logger.debug('Request sent to {} ...'.format(url))
+        resp = requests.get(url, allow_redirects=False)
         if resp.status_code >= 400:
             raise MissingContent(col_id, col_version)
-        col_version = resp.text.strip()
+        new_url = resp.headers['Location']
+        col_version = urlsplit(new_url).path.strip('/').split('/')[-1]
+        completezip_url = os.path.join(resp.headers['Location'], 'complete')
+    else:
+        parsed_url = urlparse(base_url)
+        sep = len(parsed_url.netloc.split('.')) > 2 and '-' or '.'
+        url_parts = [
+            parsed_url.scheme,
+            'legacy{}{}'.format(sep, parsed_url.netloc),
+        ] + list(parsed_url[2:])
+        base_legacy_url = urlunparse(url_parts)
+        completezip_url = '{}/content/{}/{}/complete'.format(
+            base_legacy_url,
+            col_id,
+            col_version,
+        )
 
-    # Build the url to the completezip
-    url = '{}/content/{}/{}/complete'.format(base_url, col_id, col_version)
-
-    logger.debug('Request sent to {} ...'.format(url))
-    resp = requests.get(url, stream=True)
+    logger.debug('Request sent to {} ...'.format(completezip_url))
+    resp = requests.get(completezip_url, stream=True)
 
     if not resp:
         logger.debug("Response code is {}".format(resp.status_code))
