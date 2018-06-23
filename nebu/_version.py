@@ -15,7 +15,24 @@ import os
 import re
 import subprocess
 import sys
+import json
+import requests
 
+
+def get_pypi_versions():
+    try:
+        url = "https://pypi.org/pypi/nebuchadnezzar/json"
+        data = requests.get(url).json()
+        versions = sorted(list(data["releases"].keys()))
+        return versions
+    except:
+        return []
+
+def get_latest_pypi_version():
+    try:
+        return get_pypi_versions()[-1]
+    except IndexError:
+        return ""
 
 def get_keywords():
     """Get the keywords needed to look up the version information."""
@@ -480,6 +497,8 @@ def get_versions():
     # __file__, we can work backwards from there to the root. Some
     # py2exe/bbfreeze/non-CPython implementations don't do __file__, in which
     # case we can only use expanded keywords.
+
+    print(get_latest_pypi_version())
 
     cfg = get_config()
     verbose = cfg.verbose
