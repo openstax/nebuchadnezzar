@@ -15,30 +15,7 @@ import os
 import re
 import subprocess
 import sys
-import json
 import requests
-
-
-def get_pypi_versions():
-    """Fetch Neb package versions available via pip, sorted from oldest to
-    newest. If a network error occurs, returns an empty list.
-    """
-    try:
-        url = "https://pypi.org/pypi/nebuchadnezzar/json"
-        data = requests.get(url).json()
-        versions = sorted(list(data["releases"].keys()))
-        return versions
-    except requests.exceptions.RequestException:
-        return []
-
-def get_latest_released_version():
-    """Get the latest released version of Neb. If no versions found,
-    returns an empty string
-    """
-    try:
-        return get_pypi_versions()[-1]
-    except IndexError:
-        return ""
 
 
 def get_keywords():
@@ -498,6 +475,29 @@ def render(pieces, style):
             "date": pieces.get("date")}
 
 
+def get_pypi_versions():
+    """Fetch Neb package versions available via pip, sorted from oldest to
+    newest. If a network error occurs, returns an empty list.
+    """
+    try:
+        url = "https://pypi.org/pypi/nebuchadnezzar/json"
+        data = requests.get(url).json()
+        versions = sorted(list(data["releases"].keys()))
+        return versions
+    except requests.exceptions.RequestException:
+        return []
+
+
+def get_latest_released_version():
+    """Get the latest released version of Neb. If no versions found,
+    returns an empty string
+    """
+    try:
+        return get_pypi_versions()[-1]
+    except IndexError:
+        return ""
+
+
 def get_versions():
     """Get version information or return default if unable to do so."""
     # I am in _version.py, which lives at ROOT/VERSIONFILE_SOURCE. If we have
@@ -530,9 +530,9 @@ def get_versions():
     try:
         pieces = git_pieces_from_vcs(cfg.tag_prefix, root, verbose)
         latest_version = get_latest_released_version()
-        if pieces["closest-tag"] and pieces["closest-tag"] < latest_version:
-            print("Version {0} is available for install!".format(latest_version),
-                    file = sys.stderr)
+        if pieces["closest-tag"] and pieces["closest-tag"] <= latest_version:
+            print("Version {0} available for install.".format(latest_version),
+                  file=sys.stderr)
         return render(pieces, cfg.style)
     except NotThisMethod:
         pass
