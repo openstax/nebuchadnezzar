@@ -20,19 +20,26 @@ import requests
 
 
 def get_pypi_versions():
+    """Fetch Neb package versions available via pip, sorted from oldest to
+    newest. If a network error occurs, returns an empty list.
+    """
     try:
         url = "https://pypi.org/pypi/nebuchadnezzar/json"
         data = requests.get(url).json()
         versions = sorted(list(data["releases"].keys()))
         return versions
-    except:
+    except requests.exceptions.RequestException:
         return []
 
-def get_latest_pypi_version():
+def get_latest_released_version():
+    """Get the latest released version of Neb. If no versions found,
+    returns an empty string
+    """
     try:
         return get_pypi_versions()[-1]
     except IndexError:
         return ""
+
 
 def get_keywords():
     """Get the keywords needed to look up the version information."""
@@ -498,8 +505,6 @@ def get_versions():
     # py2exe/bbfreeze/non-CPython implementations don't do __file__, in which
     # case we can only use expanded keywords.
 
-    print(get_latest_pypi_version())
-
     cfg = get_config()
     verbose = cfg.verbose
 
@@ -524,6 +529,10 @@ def get_versions():
 
     try:
         pieces = git_pieces_from_vcs(cfg.tag_prefix, root, verbose)
+        latest_version = get_latest_released_version()
+        if pieces["closest-tag"] and pieces["closest-tag"] < latest_version:
+            print("Version {0} is available for install!".format(latest_version),
+                    file = sys.stderr)
         return render(pieces, cfg.style)
     except NotThisMethod:
         pass
