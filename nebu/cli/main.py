@@ -17,27 +17,6 @@ from .validate import validate
 __all__ = ('cli',)
 
 
-def _version_callback(ctx, param, value):
-    if not value or ctx.resilient_parsing:
-        return
-    working_version = __version__
-    click.echo('Nebuchadnezzar {}'.format(working_version))
-    installed_semver_match = re.match(r"^\d+(\.\d+)*(?=\+|$)",
-                                      working_version)
-    try:
-        installed_semver = installed_semver_match.group(0)
-    except AttributeError:
-        click.echo("The semantic version of Neb could not be read.\n"
-                   "Please submit a bug report.",
-                   file=sys.stderr)
-        ctx.exit()
-    latest_version = get_latest_released_version()
-    if installed_semver < latest_version:
-        click.echo("Version {0} available for install.".format(latest_version),
-                   file=sys.stderr)
-    ctx.exit()
-
-
 def extract_sub_dict(dict, path):
     """Get values from a given path of keys"""
     for item in path:
@@ -73,14 +52,35 @@ def get_pypi_releases():
     return get_remote_releases(url, path)
 
 
-def get_latest_released_version():
+def get_latest_released_version(release_source_function):
     """Get the latest released version of Neb. If no releases found,
     returns an empty string
     """
     try:
-        return get_pypi_releases()[-1]
+        return release_source_function()[-1]
     except IndexError:
         return ""
+
+
+def _version_callback(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    working_version = __version__
+    click.echo('Nebuchadnezzar {}'.format(working_version))
+    installed_semver_match = re.match(r"^\d+(\.\d+)*(?=\+|$)",
+                                      working_version)
+    try:
+        installed_semver = installed_semver_match.group(0)
+    except AttributeError:
+        click.echo("The semantic version of Neb could not be read.\n"
+                   "Please submit a bug report.",
+                   file=sys.stderr)
+        ctx.exit()
+    latest_version = get_latest_released_version(get_pypi_releases)
+    if installed_semver < latest_version:
+        click.echo("Version {0} available for install.".format(latest_version),
+                   file=sys.stderr)
+    ctx.exit()
 
 
 @click.group()

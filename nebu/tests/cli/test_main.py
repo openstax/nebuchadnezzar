@@ -48,3 +48,11 @@ def test_bad_remote_path():
     url = "https://pypi.org/pypi/nebuchadnezzar/json"
     bad_path = ["bad_path.!@#$%^&*()_+"]
     assert get_remote_releases(url, bad_path) == []
+
+
+def test_no_versions_found():
+    from nebu.cli.main import get_latest_released_version
+
+    def empty_version_list():
+        return []
+    assert get_latest_released_version(empty_version_list) == ""
