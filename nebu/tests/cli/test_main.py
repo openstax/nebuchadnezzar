@@ -12,6 +12,8 @@ def test_for_version(monkeypatch, invoker):
     assert result.exit_code == 0
 
     expected_output = 'Nebuchadnezzar {}\n'.format(version)
+    expected_output += "The semantic version of Neb could not be read.\n"
+    expected_output += "Please submit a bug report.\n"
     assert result.output == expected_output
 
 
@@ -32,3 +34,17 @@ def test_old_version(monkeypatch, invoker):
                                "Version available",
                                result.output)
     assert output_no_version == expected_output
+
+
+def test_bad_remote_url():
+    from nebu.cli.main import get_remote_releases
+    bad_url = "bad_url.!@#$%^&*()_+"
+    path = []
+    assert get_remote_releases(bad_url, path) == []
+
+
+def test_bad_remote_path():
+    from nebu.cli.main import get_remote_releases
+    url = "https://pypi.org/pypi/nebuchadnezzar/json"
+    bad_path = ["bad_path.!@#$%^&*()_+"]
+    assert get_remote_releases(url, bad_path) == []

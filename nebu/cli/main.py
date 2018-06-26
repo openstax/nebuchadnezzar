@@ -22,7 +22,7 @@ def _version_callback(ctx, param, value):
         return
     working_version = __version__
     click.echo('Nebuchadnezzar {}'.format(working_version))
-    installed_semver_match = re.match(r"^\w+(\.\w+)*(?=\+|$)",
+    installed_semver_match = re.match(r"^\d+(\.\d+)*(?=\+|$)",
                                       working_version)
     try:
         installed_semver = installed_semver_match.group(0)
@@ -38,24 +38,39 @@ def _version_callback(ctx, param, value):
     ctx.exit()
 
 
-def get_pypi_releases():
-    """Fetch Neb package releases available via pip, sorted from oldest to
-    newest. If a network error occurs, returns an empty list.
+def extract_sub_dict(dict, path):
+    """Get values from a given path of keys"""
+    for item in path:
+        dict = dict[item]
+    return dict
+
+
+def get_remote_releases(json_url, json_path):
+    """Get list of releases from remote json file, sorted from oldest
+    to newest. If a network error occurs, returns an empty list.
     """
     try:
-        url = "https://pypi.org/pypi/nebuchadnezzar/json"
-        data = requests.get(url).json()
-        try:
-            releases_from_request = data["releases"]
-        except KeyError:
-            click.echo("The PyPi API schema seems to have changed.\n"
-                       "Please submit a bug report.",
-                       file=sys.stderr)
-            return []
-        sorted_releases = sorted(list(releases_from_request.keys()))
-        return sorted_releases
+        json = requests.get(json_url).json()
     except requests.exceptions.RequestException:
+        click.echo("Could not connect to find new releases.",
+                   file=sys.stderr)
         return []
+    try:
+        releases_from_request = extract_sub_dict(json, json_path)
+    except KeyError:
+        click.echo("The remote JSON schema seems to have changed.\n"
+                   "Please submit a bug report.",
+                   file=sys.stderr)
+        return []
+    sorted_releases = sorted(list(releases_from_request.keys()))
+    return sorted_releases
+
+
+def get_pypi_releases():
+    """Fetch Neb package releases available via pip"""
+    url = "https://pypi.org/pypi/nebuchadnezzar/json"
+    path = ["releases"]
+    return get_remote_releases(url, path)
 
 
 def get_latest_released_version():
