@@ -22,7 +22,7 @@ def _version_callback(ctx, param, value):
         return
     working_version = __version__
     click.echo('Nebuchadnezzar {}'.format(working_version))
-    installed_semver_match = re.match(r"^\d\.*\d*\.*\d*(?=\+)",
+    installed_semver_match = re.match(r"^\w+(\.\w+)*(?=\+|$)",
                                       working_version)
     try:
         installed_semver = installed_semver_match.group(0)
