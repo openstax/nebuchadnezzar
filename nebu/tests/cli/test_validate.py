@@ -32,13 +32,19 @@ class TestValidateCmd:
         assert result.exit_code == 0
 
         expected_output = (
-            ('collection.xml:114:13 -- error: element "para" from '
-             'namespace "http://cnx.rice.edu/cnxml" not allowed in '
-             'this context'),
             'mux:mux is not a valid identifier',
-            ('mux/index.cnxml:61:10 -- error: unknown element "foo" from '
-             'namespace "http://cnx.rice.edu/cnxml"'),
+            ('collection.xml:114:13 -- error: element "cnx:para" not'
+             ' allowed here; expected element "content", "declarations", '
+             '"extensions", "featured-links" or "parameters"'
+             ),
+            ('mux/index.cnxml:61:10 -- error: element "foo" not allowed'
+             ' anywhere; expected element "code", "definition", "div", '
+             '"equation", "example", "exercise", "figure", "list", "media",'
+             ' "note", "para", "preformat", "q:problemset", '
+             '"quote", "rule", "section" or "table"'
+             ),
         )
+
         for line in expected_output:
             assert line in result.output
 
