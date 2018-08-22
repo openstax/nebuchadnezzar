@@ -12,6 +12,9 @@ INITIAL_DEFAULT_CONFIG = """\
 # [environ-<short-name>]
 # url = <base-url-to-the-environment>
 
+[environ-localhost]
+url = http://localhost
+
 [environ-dev]
 url = https://dev.cnx.org
 

@@ -69,6 +69,7 @@ class TestDiscoverSettings:
         expected_settings = {
             '_config_file': loc,
             'environs': {
+                'localhost': {'url': 'http://localhost'},
                 'dev': {'url': 'https://dev.cnx.org'},
                 'qa': {'url': 'https://qa.cnx.org'},
                 'staging': {'url': 'https://staging.cnx.org'},
@@ -95,6 +96,7 @@ class TestDiscoverSettings:
         expected_settings = {
             '_config_file': loc,
             'environs': {
+                'localhost': {'url': 'http://localhost'},
                 'dev': {'url': 'https://dev.cnx.org'},
                 'qa': {'url': 'https://qa.cnx.org'},
                 'staging': {'url': 'https://staging.cnx.org'},
