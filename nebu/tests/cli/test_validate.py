@@ -49,3 +49,31 @@ class TestValidateCmd:
             assert line in result.output
 
         assert "We've got problems... :(" in result.output
+
+    def test_outside_cwd_invalid_content(self, datadir, monkeypatch, invoker):
+        path = datadir / 'invalid_collection'
+
+        from nebu.cli.main import cli
+        args = ['validate', str(path)]
+        result = invoker(cli, args)
+
+        assert result.exit_code == 0
+
+        expected_output = (
+            'mux:mux is not a valid identifier',
+            ('collection.xml:114:13 -- error: element "cnx:para" not'
+             ' allowed here; expected element "content", "declarations", '
+             '"extensions", "featured-links" or "parameters"'
+             ),
+            ('mux/index.cnxml:61:10 -- error: element "foo" not allowed'
+             ' anywhere; expected element "code", "definition", "div", '
+             '"equation", "example", "exercise", "figure", "list", "media",'
+             ' "note", "para", "preformat", "q:problemset", '
+             '"quote", "rule", "section" or "table"'
+             ),
+        )
+
+        for line in expected_output:
+            assert line in result.output
+
+        assert "We've got problems... :(" in result.output
