@@ -204,6 +204,41 @@ class TestPublishCmd:
         )
         assert expected_output in result.output
 
+    def test_with_auth_error(self, datadir, monkeypatch,
+                             requests_mock, invoker):
+        id = 'collection'
+        publisher = 'CollegeStax'
+        message = 'mEssAgE'
+        monkeypatch.setenv('XXX_PUBLISHER', publisher)
+
+        # Mock the publishing request
+        url = 'https://cnx.org/api/publish-litezip'
+        requests_mock.register_uri(
+            'POST',
+            url,
+            status_code=401,
+            text='401',
+        )
+
+        from nebu.cli.main import cli
+        # Use Current Working Directory (CWD)
+        args = ['publish', 'test-env', str(datadir / id), message]
+        result = invoker(cli, args)
+
+        # Check the results
+        if result.exception and not isinstance(result.exception, SystemExit):
+            raise result.exception
+        assert result.exit_code == 1
+        # Check for the expected failure output.
+        assert 'Bad credentials: ' in result.output
+        expected_output = (
+            'Stop the Press!!! =()\n'
+        )
+        # FIXME Ignoring temporary formatting of output, just check for
+        #       the last line so we know we got to the correct place.
+        # assert result.output == expected_output
+        assert expected_output in result.output
+
     def test_with_errors(self, datadir, monkeypatch,
                          requests_mock, invoker):
         id = 'collection'
