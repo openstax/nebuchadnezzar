@@ -88,7 +88,7 @@ class TestPublishCmd:
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
-        args = ['publish', 'test-env', '.', message,
+        args = ['publish', 'test-env', '.', '-m', message,
                 '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 
@@ -146,7 +146,7 @@ class TestPublishCmd:
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
-        args = ['publish', 'test-env', str(datadir / id), message,
+        args = ['publish', 'test-env', str(datadir / id), '-m', message,
                 '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 
@@ -194,7 +194,7 @@ class TestPublishCmd:
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
-        args = ['publish', 'test-env', str(datadir / id), message,
+        args = ['publish', 'test-env', str(datadir / id), '-m', message,
                 '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 
@@ -234,7 +234,7 @@ class TestPublishCmd:
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
-        args = ['publish', 'test-env', str(datadir / id), message,
+        args = ['publish', 'test-env', str(datadir / id), '-m', message,
                 '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 
@@ -281,7 +281,7 @@ class TestPublishCmd:
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
-        args = ['publish', 'test-env', str(datadir / id), message,
+        args = ['publish', 'test-env', str(datadir / id), '-m', message,
                 '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 
@@ -315,7 +315,7 @@ class TestPublishCmd:
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
-        args = ['publish', 'test-env', str(datadir / id), message,
+        args = ['publish', 'test-env', str(datadir / id), '-m', message,
                 '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 
@@ -358,7 +358,7 @@ class TestPublishCmd:
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
-        args = ['publish', '--skip-validation', 'test-env', '.', message,
+        args = ['publish', '--skip-validation', 'test-env', '.', '-m', message,
                 '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 

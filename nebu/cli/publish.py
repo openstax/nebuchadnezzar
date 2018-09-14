@@ -91,12 +91,13 @@ def _publish(base_url, struct, message, username, password):
 @click.argument('env')
 @click.argument('content_dir',
                 type=click.Path(exists=True, file_okay=False))
-@click.argument('publication_message', type=str)
-@click.option('--username', type=str, prompt=True)
-@click.option('--password', type=str, prompt=True, hide_input=True)
+@click.option('-m', '--message', type=str,
+              prompt='Publication message')
+@click.option('-u', '--username', type=str, prompt=True)
+@click.option('-p', '--password', type=str, prompt=True, hide_input=True)
 @click.option('--skip-validation', is_flag=True)
 @click.pass_context
-def publish(ctx, env, content_dir, publication_message, username, password,
+def publish(ctx, env, content_dir, message, username, password,
             skip_validation):
     base_url = get_base_url(ctx, env)
 
@@ -107,8 +108,7 @@ def publish(ctx, env, content_dir, publication_message, username, password,
         logger.info("We've got problems... :(")
         sys.exit(1)
 
-    has_published = _publish(base_url, struct, publication_message,
-                             username, password)
+    has_published = _publish(base_url, struct, message, username, password)
     if has_published:
         logger.info("Great work!!! =D")
     else:
