@@ -2,6 +2,7 @@
 import io
 import zipfile
 from cgi import parse_multipart
+from base64 import b64encode
 
 import pretend
 
@@ -213,11 +214,19 @@ class TestPublishCmd:
 
         # Mock the publishing request
         url = 'https://cnx.org/api/publish-litezip'
+        cred = b64encode('{}:{}'.format('username', 'password').encode())
         requests_mock.register_uri(
             'POST',
             url,
             status_code=401,
             text='401',
+        )
+        requests_mock.register_uri(
+            'POST',
+            url,
+            status_code=200,
+            text='200',
+            request_headers={'Authorization': 'Basic {}'.format(cred)}
         )
 
         from nebu.cli.main import cli
@@ -233,6 +242,50 @@ class TestPublishCmd:
         assert 'Bad credentials: ' in result.output
         expected_output = (
             'Stop the Press!!! =()\n'
+        )
+        # FIXME Ignoring temporary formatting of output, just check for
+        #       the last line so we know we got to the correct place.
+        # assert result.output == expected_output
+        assert expected_output in result.output
+
+    def test_auth_good_credentials(self, datadir, monkeypatch,
+                                   requests_mock, invoker):
+        """Test that the options are accepted when publishing.
+        """
+        id = 'collection'
+        publisher = 'CollegeStax'
+        message = 'mEssAgE'
+        monkeypatch.setenv('XXX_PUBLISHER', publisher)
+
+        # Mock the publishing request
+        url = 'https://cnx.org/api/publish-litezip'
+        cred = b64encode('{}:{}'.format('username', 'password').encode())
+        requests_mock.register_uri(
+            'POST',
+            url,
+            status_code=401,
+            text='401',
+        )
+        requests_mock.register_uri(
+            'POST',
+            url,
+            status_code=200,
+            text='200',
+            request_headers={'Authorization': 'Basic {}'.format(cred)}
+        )
+
+        from nebu.cli.main import cli
+        # Use Current Working Directory (CWD)
+        args = ['publish', 'test-env', str(datadir / id), message,
+                '--username', 'username', '--password', 'password']
+        result = invoker(cli, args)
+
+        # Check the results
+        if result.exception and not isinstance(result.exception, SystemExit):
+            raise result.exception
+        assert result.exit_code == 0
+        expected_output = (
+            'Great work!!! =D\n'
         )
         # FIXME Ignoring temporary formatting of output, just check for
         #       the last line so we know we got to the correct place.
