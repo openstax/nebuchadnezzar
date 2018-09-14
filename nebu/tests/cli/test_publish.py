@@ -88,7 +88,8 @@ class TestPublishCmd:
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
-        args = ['publish', 'test-env', '.', message]
+        args = ['publish', 'test-env', '.', message,
+                '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 
         # Check the results
@@ -145,7 +146,8 @@ class TestPublishCmd:
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
-        args = ['publish', 'test-env', str(datadir / id), message]
+        args = ['publish', 'test-env', str(datadir / id), message,
+                '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 
         # Check the results
@@ -192,7 +194,8 @@ class TestPublishCmd:
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
-        args = ['publish', 'test-env', str(datadir / id), message]
+        args = ['publish', 'test-env', str(datadir / id), message,
+                '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 
         # Check the results
@@ -231,7 +234,8 @@ class TestPublishCmd:
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
-        args = ['publish', 'test-env', str(datadir / id), message]
+        args = ['publish', 'test-env', str(datadir / id), message,
+                '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 
         # Check the results
@@ -259,7 +263,8 @@ class TestPublishCmd:
 
         # Mock the publishing request
         url = 'https://cnx.org/api/publish-litezip'
-        cred = b64encode('{}:{}'.format('username', 'password').encode())
+        cred = b64encode('{}:{}'.format('someusername', 'somepassword')
+                         .encode())
         requests_mock.register_uri(
             'POST',
             url,
@@ -277,7 +282,7 @@ class TestPublishCmd:
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
         args = ['publish', 'test-env', str(datadir / id), message,
-                '--username', 'username', '--password', 'password']
+                '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 
         # Check the results
@@ -310,7 +315,8 @@ class TestPublishCmd:
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
-        args = ['publish', 'test-env', str(datadir / id), message]
+        args = ['publish', 'test-env', str(datadir / id), message,
+                '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 
         # Check the results
@@ -352,7 +358,8 @@ class TestPublishCmd:
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
-        args = ['publish', '--skip-validation', 'test-env', '.', message]
+        args = ['publish', '--skip-validation', 'test-env', '.', message,
+                '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
 
         # Check the results

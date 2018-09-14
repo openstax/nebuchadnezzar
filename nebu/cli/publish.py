@@ -92,12 +92,12 @@ def _publish(base_url, struct, message, username, password):
 @click.argument('content_dir',
                 type=click.Path(exists=True, file_okay=False))
 @click.argument('publication_message', type=str)
+@click.option('--username', type=str, prompt=True)
+@click.option('--password', type=str, prompt=True, hide_input=True)
 @click.option('--skip-validation', is_flag=True)
-@click.option('--username', is_flag=False, type=str)
-@click.option('--password', is_flag=False, type=str)
 @click.pass_context
-def publish(ctx, env, content_dir, publication_message, skip_validation,
-            username, password):
+def publish(ctx, env, content_dir, publication_message, username, password,
+            skip_validation):
     base_url = get_base_url(ctx, env)
 
     content_dir = Path(content_dir).resolve()
