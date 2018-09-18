@@ -28,7 +28,7 @@ Install
 #. Install ``virtualenv`` (on OSX you can run ``pip3 install virtualenv``)
 #. Initialize the python virtual environment:
 
-   a. ``python3 -m virtualenv env``
+   a. ``virtualenv ./venv/ --python=python3.5``
    #. ``source ./venv/bin/activate``
    #. ``pip3 install --upgrade pip setuptools``
    #. ``python setup.py develop``
