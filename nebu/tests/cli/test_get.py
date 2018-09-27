@@ -51,7 +51,7 @@ class TestGetCmd:
 
         assert result.exit_code == 0
 
-        dir = tmpcwd / col_id
+        dir = tmpcwd / '{}_1.{}'.format(col_id, '2.1')
         expected = datadir / 'collection'
 
         def _rel(p, b):
@@ -160,7 +160,7 @@ class TestGetCmd:
 
         assert result.exit_code == 0
 
-        dir = tmpcwd / col_id
+        dir = tmpcwd / '{}_1.{}'.format(col_id, '2.1')
         expected = datadir / 'collection'
 
         def _rel(p, b):
@@ -193,7 +193,7 @@ class TestGetCmd:
 
         assert result.exit_code == 2
 
-        assert 'Missing argument "col_version"' in result.output
+        assert 'missing argument "col_version"' in result.output.lower()
 
     def test_failed_request_using_version(self, requests_mock, invoker):
         col_id = 'col00000'

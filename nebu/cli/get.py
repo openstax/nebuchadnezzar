@@ -32,8 +32,10 @@ def get(ctx, env, col_id, col_version, output_dir):
     zip_filepath = tmp_dir / 'complete.zip'
     if output_dir is None:
         output_dir = Path.cwd() / col_id
+        custom_dir = False
     else:
         output_dir = Path(output_dir)
+        custom_dir = True
 
     if output_dir.exists():
         raise ExistingOutputDir(output_dir)
@@ -130,6 +132,9 @@ def get(ctx, env, col_id, col_version, output_dir):
             full_path = os.path.join(dirpath, name)
             if imghdr.what(full_path):
                 os.remove(full_path)
+
+    if not custom_dir:
+        output_dir = '{}_1.{}'.format(output_dir, version)
 
     logger.debug(
         "Cleaning up extraction data at '{}'".format(tmp_dir))
