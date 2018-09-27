@@ -13,7 +13,7 @@ from litezip import (
 )
 
 from ..logger import logger
-from ._common import common_params, confirm, get_base_url
+from ._common import common_params, confirm, get_base_url, gen_coll_dir_name
 from .exceptions import *  # noqa: F403
 
 
@@ -30,80 +30,138 @@ def get(ctx, env, col_id, col_version, output_dir):
     # Determine the output directory
     tmp_dir = Path(tempfile.mkdtemp())
     zip_filepath = tmp_dir / 'complete.zip'
-    if output_dir is None:
-        output_dir = Path.cwd() / col_id
-    else:
-        output_dir = Path(output_dir)
 
-    if output_dir.exists():
-        raise ExistingOutputDir(output_dir)
+    def build_base_url(ctx, env):
+        base_url = get_base_url(ctx, env)
+        parsed_url = urlparse(base_url)
+        sep = len(parsed_url.netloc.split('.')) > 2 and '-' or '.'
+        url_parts = [
+            parsed_url.scheme,
+            'archive{}{}'.format(sep, parsed_url.netloc),
+        ] + list(parsed_url[2:])
+        return urlunparse(url_parts)
 
-    # Build the base url
-    base_url = get_base_url(ctx, env)
-    parsed_url = urlparse(base_url)
-    sep = len(parsed_url.netloc.split('.')) > 2 and '-' or '.'
-    url_parts = [
-        parsed_url.scheme,
-        'archive{}{}'.format(sep, parsed_url.netloc),
-    ] + list(parsed_url[2:])
-    base_url = urlunparse(url_parts)
+    def build_metadata_url(col_id, col_version):
+        # col_hash = '{}/{}'.format(col_id, col_version)
+        return '{}/content/{}/{}'.format(base_url, col_hash, col_version)
 
-    col_hash = '{}/{}'.format(col_id, col_version)
-    # Fetch metadata
-    url = '{}/content/{}'.format(base_url, col_hash)
-    resp = requests.get(url)
-    if resp.status_code >= 400:
-        raise MissingContent(col_id, col_version)
-    col_metadata = resp.json()
-    uuid = col_metadata['id']
-    version = col_metadata['version']
+    def build_extras_url(base_url, uuid, version):
+        return '{}/extras/{}@{}'.format(base_url, uuid, version)
 
-    # Fetch extras (includes head and downloadable file info)
-    url = '{}/extras/{}@{}'.format(base_url, uuid, version)
-    resp = requests.get(url)
+    def build_zip_url(base_url, zip_path):
+        url = '{}{}'.format(base_url, zip_path)
 
-    if col_version == 'latest':
-        version = resp.json()['headVersion']
-        url = '{}/extras/{}@{}'.format(base_url, uuid, version)
-        resp = requests.get(url)
+    def gen_coll_dir_name(col_id, version):
+        # Gen. the directory name for the unzipped collection file
+        return '{}_1.{}'.format(col_id, version)
 
-    col_extras = resp.json()
+    def fetch_metadata(metadata_url):
+        # Fetch metadata
+        resp = requests.get(metadata_url)
+        if resp.status_code >= 400:
+            raise MissingContent(col_id, col_version)
+        col_metadata = resp.json()
+        uuid = col_metadata['id']
+        version = col_metadata['version']
+        return (uuid, version)
 
-    if version != col_extras['headVersion']:
-        logger.warning("Fetching non-head version of {}."
-                       "\n    Head: {},"
-                       " requested {}".format(col_id,
-                                              col_extras['headVersion'],
-                                              version))
-        if not(confirm("Fetch anyway? [y/n] ")):
-            raise OldContent()
+    def fetch_extras(extras_url):
+        # Fetch extras (includes head and downloadable file info)
+        if col_version != 'latest':
+            resp = requests.get(url)
 
-    # Get zip url from downloads
-    zipinfo = [d for d in col_extras['downloads']
-               if d['format'] == 'Offline ZIP'][0]
+        if col_version == 'latest':
+            latest_version = resp.json()['headVersion']
+            resp = requests.get(extras_url)
+            return
 
-    if zipinfo['state'] != 'good':
-        logger.info("The content exists,"
-                    " but the completezip is {}".format(zipinfo['state']))
-        raise MissingContent(col_id, col_version)
+            extras_json = resp.json()
 
-    url = '{}{}'.format(base_url, zipinfo['path'])
+        if version != latest_version:
+            logger.warning("Fetching non-head version of {}."
+                           "\n    Head: {},"
+                           " requested {}".format(col_id,
+                                                  col_extras['headVersion'],
+                                                  version))
+            if not(confirm("Fetch anyway? [y/n] ")):
+                raise OldContent()
 
-    logger.debug('Request sent to {} ...'.format(url))
-    resp = requests.get(url, stream=True)
+    def fetch_zip(zip_url):
+        logger.debug('Request sent to {} ...'.format(zip_url))
+        zip_resp = requests.get(zip_url, stream=True)
+        return zip_resp
 
-    if not resp:
-        logger.debug("Response code is {}".format(resp.status_code))
-        raise MissingContent(col_id, col_version)
-    elif resp.status_code == 204:
-        logger.info("The content exists, but the completezip is missing")
-        raise MissingContent(col_id, col_version)
+    def gen_output_dir_name(output_dir):
+        if output_dir: # if provided a dir name
+            # turn it into a Path
+            output_dir = Path(dir_name)
 
-    content_size = int(resp.headers['Content-Length'].strip())
+            if output_dir.exists():
+                raise ExistingOutputDir(output_dir)
+        else:
+            my_output_dir = Path(dir_name)
+
+            if my_output_dir.exists():
+                raise ExistingOutputDir(my_output_dir)
+        return something
+
+    def gen_output_dir_name_WIP(output_dir):
+        if output_dir is None:
+            # generate one from the collection name and version
+            if col_version == 'latest':
+                specific_version = version
+            else:
+                specific_version = col_version
+
+            output_dir = Path.cwd() / gen_coll_dir_name(col_id, specific_version)
+
+            if output_dir.exists():
+                raise ExistingOutputDir(output_dir)
+        return something
+
+    ##########################################
+    dir_name = gen_coll_dir_name(col_id, col_version)
+
+    base_url = build_base_url(ctx, env)
+
+
+    metadata_url = build_metadata_url(col_id, col_version)
+
+    uuid, version = fetch_metadata(metadata_url)
+
+    extras_url = build_extras_url(base_url, uuid, version)
+    extras_resp = fetch_extras(extras_url)
+
+    def get_zip_info():
+        pass
+        # Get zip url from downloads
+        zipinfo = [d for d in col_extras['downloads']
+                   if d['format'] == 'Offline ZIP'][0]
+
+        if zipinfo['state'] != 'good':
+            logger.info("The content exists,"
+                        " but the completezip is {}".format(zipinfo['state']))
+            raise MissingContent(col_id, col_version)
+
+        zip_path = zipinfo['path']
+
+        zip_url = build_zip_url(base_url, zip_path)
+
+        zip_resp = fetch_zip(zip_url)
+
+        if not zip_resp:
+            logger.debug("Response code is {}".format(zip_resp.status_code))
+            raise MissingContent(col_id, col_version)
+        elif zip_resp.status_code == 204:
+            logger.info("The content exists, but the completezip is missing")
+            raise MissingContent(col_id, col_version)
+
+
+    content_size = int(zip_resp.headers['Content-Length'].strip())
     label = 'Downloading {}'.format(col_id)
     progressbar = click.progressbar(label=label, length=content_size)
     with progressbar as pbar, zip_filepath.open('wb') as fb:
-        for buffer_ in resp.iter_content(1024):
+        for buffer_ in zip_resp.iter_content(1024):
             if buffer_:
                 fb.write(buffer_)
                 pbar.update(len(buffer_))

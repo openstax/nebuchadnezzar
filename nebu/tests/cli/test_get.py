@@ -1,6 +1,7 @@
 from functools import partial
 from os import scandir
 from pathlib import Path
+from nebu.cli._common import gen_coll_dir_name
 
 
 def pathlib_walk(dir):
@@ -51,7 +52,7 @@ class TestGetCmd:
 
         assert result.exit_code == 0
 
-        dir = tmpcwd / col_id
+        dir = tmpcwd / gen_coll_dir_name(col_id, col_version)
         expected = datadir / 'collection'
 
         def _rel(p, b):
@@ -94,13 +95,13 @@ class TestGetCmd:
 
         assert result.exit_code == 0
 
-        dir = tmpcwd / 'mydir'
+        mydir = tmpcwd / 'mydir'
         expected = datadir / 'collection'
 
         def _rel(p, b):
             return p.relative_to(b)
 
-        relative_dir = map(partial(_rel, b=dir), pathlib_walk(dir))
+        relative_dir = map(partial(_rel, b=mydir), pathlib_walk(mydir))
         relative_expected = map(partial(_rel, b=expected),
                                 pathlib_walk(expected))
         assert sorted(relative_dir) == sorted(relative_expected)
@@ -138,7 +139,8 @@ class TestGetCmd:
         col_id = 'col11405'
         col_version = 'latest'
         col_uuid = 'b699648f-405b-429f-bf11-37bad4246e7c'
-        col_hash = '{}@{}'.format(col_uuid, '2.1')
+        col_specific_version = '2.1'
+        col_hash = '{}@{}'.format(col_uuid, col_specific_version)
         base_url = 'https://archive.cnx.org'
         metadata_url = '{}/content/{}/{}'.format(base_url, col_id, col_version)
         extras_url = '{}/extras/{}'.format(base_url, col_hash)
@@ -160,7 +162,7 @@ class TestGetCmd:
 
         assert result.exit_code == 0
 
-        dir = tmpcwd / col_id
+        dir = tmpcwd / gen_coll_dir_name(col_id, col_specific_version)
         expected = datadir / 'collection'
 
         def _rel(p, b):
@@ -174,7 +176,8 @@ class TestGetCmd:
     def test_with_existing_output_dir(self, tmpcwd, capsys, invoker):
         col_id = 'col00000'
 
-        (tmpcwd / col_id).mkdir()
+        # (tmpcwd / col_id).mkdir()
+        (tmpcwd / gen_coll_dir_name(col_id, '1.1')).mkdir()
 
         from nebu.cli.main import cli
         args = ['get', 'test-env', col_id, '1.1']
@@ -237,7 +240,7 @@ class TestGetCmd:
         msg = "The content exists, but the completezip is missing"
         assert msg in result.output
 
-        msg = "content unavailable for '{}/{}'".format(col_id, col_version)
+        msg = "content unavailable for '{}/{}'".format(col_id, col_version) # BRYAN
         assert msg in result.output
 
     def test_empty_zip(self, datadir, tmpcwd, requests_mock, invoker):
