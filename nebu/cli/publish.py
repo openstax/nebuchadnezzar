@@ -41,7 +41,8 @@ def _publish(base_url, struct, message, username, password):
                 rel_file_path = base_file_path / model.id / model.file.name
                 files.append((file, rel_file_path))
                 for resource in model.resources:
-                    files.append((resource, base_file_path / model.id / resource.name))
+                    files.append((resource,
+                                  base_file_path / model.id / resource.name))
 
             for file, rel_file_path in files:
                 zb.write(str(file), str(rel_file_path))
@@ -62,8 +63,8 @@ def _publish(base_url, struct, message, username, password):
         'file': ('contents.zip', zip_file.open('rb'),),
     }
     # Send it!
-    resp = requests.post(url, data=data, files=files, auth=auth,
-                         headers=headers)
+    resp = requests.post(url, data=data, files=files,
+                         auth=auth, headers=headers)
 
     # Clean up!
     zip_file.unlink()
