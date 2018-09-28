@@ -201,7 +201,7 @@ class TestGetCmd:
 
         assert result.exit_code == 2
 
-        assert 'missing argument "col_version"' in result.output.lower()
+        assert 'Missing argument "COL_VERSION"' in result.output
 
     def test_failed_request_using_version(self, requests_mock, invoker):
         col_id = 'col00000'
