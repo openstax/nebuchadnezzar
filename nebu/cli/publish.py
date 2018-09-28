@@ -28,15 +28,23 @@ def _publish(base_url, struct, message, username, password):
     zip_file = Path(zip_file)
     with zipfile.ZipFile(str(zip_file), 'w') as zb:
         for model in struct:
+            files = []
             # Write the content file into the zip.
             if isinstance(model, Collection):
                 file = model.file
                 rel_file_path = base_file_path / model.file.name
+                files.append((file, rel_file_path))
+                for resource in model.resources:
+                    files.append((resource, base_file_path / resource.name))
             else:  # Module
                 file = model.file
                 rel_file_path = base_file_path / model.id / model.file.name
-            zb.write(str(file), str(rel_file_path))
-            # TODO Include resource files
+                files.append((file, rel_file_path))
+                for resource in model.resources:
+                    files.append((resource, base_file_path / model.id / resource.name))
+
+            for file, rel_file_path in files:
+                zb.write(str(file), str(rel_file_path))
 
     url = '{}/api/publish-litezip'.format(base_url)
     headers = {'X-API-Version': '3'}
