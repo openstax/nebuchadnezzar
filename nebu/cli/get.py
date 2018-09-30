@@ -92,23 +92,31 @@ def _count_leaves(node, count=0):
         return count + 1
 
 
-def _write_node(node, base_url, out_dir, pbar):
+filename_by_type = {'application/vnd.org.cnx.collection': 'collection.xml',
+                    'application/vnd.org.cnx.module': 'index.cnxml'}
+
+
+def _write_node(node, base_url, out_dir, pbar, position=0):
     """Write out a tree node"""
     resp = requests.get('{}/contents/{}'.format(base_url, node['id']))
+    if position > 0:
+        dirname = '{:02d} {}'.format(position, node['title'])
+    else:
+        dirname = node['title']
+    out_dir = out_dir / dirname
+    os.mkdir(str(out_dir))
     if resp:  # Subcollections cannot be fetched directly
         metadata = resp.json()
         resources = {r['filename']: r for r in metadata['resources']}
+        filename = filename_by_type[metadata['mediaType']]
         url = '{}/resources/{}'.format(base_url, resources[filename]['id'])
         file_resp = requests.get(url)
-        if metadata['mediaType'] == 'application/vnd.org.cnx.collection':
-            filepath = out_dir / 'collection.xml'
-        else:
-            modpath = out_dir / metadata['legacy_id']
-            os.mkdir(str(modpath))
-            filepath = modpath / 'index.cnxml'
+        filepath = out_dir / filename
         filepath.write_text(file_resp.text)
         pbar.update(1)
 
     if 'contents' in node:
+        position = 0
         for child in node['contents']:
-            _write_node(child, base_url, out_dir, pbar)
+            position += 1
+            _write_node(child, base_url, out_dir, pbar, position)
