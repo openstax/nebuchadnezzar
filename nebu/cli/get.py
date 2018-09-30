@@ -1,16 +1,9 @@
-import shutil
-import tempfile
-import zipfile
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 import os
-import imghdr
 
 import click
 import requests
-from litezip import (
-    convert_completezip,
-)
 
 from ..logger import logger
 from ._common import common_params, confirm, get_base_url
@@ -28,8 +21,6 @@ from .exceptions import *  # noqa: F403
 def get(ctx, env, col_id, col_version, output_dir):
     """download and expand the completezip to the current working directory"""
     # Determine the output directory
-    tmp_dir = Path(tempfile.mkdtemp())
-    zip_filepath = tmp_dir / 'complete.zip'
 
     # Build the base url
     base_url = get_base_url(ctx, env)
@@ -56,6 +47,7 @@ def get(ctx, env, col_id, col_version, output_dir):
         output_dir = Path.cwd() / '{}_1.{}'.format(col_id, version)
     else:
         output_dir = Path(output_dir)
+
     # ... and check if it's already been downloaded
     if output_dir.exists():
         raise ExistingOutputDir(output_dir)
@@ -80,60 +72,43 @@ def get(ctx, env, col_id, col_version, output_dir):
         if not(confirm("Fetch anyway? [y/n] ")):
             raise OldContent()
 
-    # Get zip url from downloads
-    zipinfo = [d for d in col_extras['downloads']
-               if d['format'] == 'Offline ZIP'][0]
+    # Write tree
 
-    if zipinfo['state'] != 'good':
-        logger.info("The content exists,"
-                    " but the completezip is {}".format(zipinfo['state']))
-        raise MissingContent(col_id, col_version)
+    os.mkdir(str(output_dir))
+    num_pages = _count_leaves(col_metadata['tree']) + 1
+    label = 'Downloading to {}'.format(output_dir.relative_to(Path.cwd()))
+    with click.progressbar(length=num_pages,
+                           label=label,
+                           show_pos=True) as pbar:
+        _write_node(col_metadata['tree'], base_url, output_dir, pbar)
 
-    url = '{}{}'.format(base_url, zipinfo['path'])
 
-    logger.debug('Request sent to {} ...'.format(url))
-    resp = requests.get(url, stream=True)
+def _count_leaves(node, count=0):
+    if 'contents' in node:
+        for child in node['contents']:
+            count = _count_leaves(child, count)
+        return count
+    else:
+        return count + 1
 
-    if not resp:
-        logger.debug("Response code is {}".format(resp.status_code))
-        raise MissingContent(col_id, col_version)
-    elif resp.status_code == 204:
-        logger.info("The content exists, but the completezip is missing")
-        raise MissingContent(col_id, col_version)
 
-    content_size = int(resp.headers['Content-Length'].strip())
-    label = 'Downloading {}'.format(output_dir)
-    progressbar = click.progressbar(label=label, length=content_size)
-    with progressbar as pbar, zip_filepath.open('wb') as fb:
-        for buffer_ in resp.iter_content(1024):
-            if buffer_:
-                fb.write(buffer_)
-                pbar.update(len(buffer_))
+def _write_node(node, base_url, out_dir, pbar):
+    """Write out a tree node"""
+    resp = requests.get('{}/contents/{}'.format(base_url, node['id']))
+    if resp:  # Subcollections cannot be fetched directly
+        metadata = resp.json()
+        resources = {r['filename']: r for r in metadata['resources']}
+        url = '{}/resources/{}'.format(base_url, resources[filename]['id'])
+        file_resp = requests.get(url)
+        if metadata['mediaType'] == 'application/vnd.org.cnx.collection':
+            filepath = out_dir / 'collection.xml'
+        else:
+            modpath = out_dir / metadata['legacy_id']
+            os.mkdir(str(modpath))
+            filepath = modpath / 'index.cnxml'
+        filepath.write_text(file_resp.text)
+        pbar.update(1)
 
-    label = 'Extracting {}'.format(output_dir)
-    with zipfile.ZipFile(str(zip_filepath), 'r') as zip:
-        progressbar = click.progressbar(iterable=zip.infolist(),
-                                        label=label,
-                                        show_eta=False)
-        with progressbar as pbar:
-            for i in pbar:
-                zip.extract(i, path=str(tmp_dir))
-
-    extracted_dir = Path([x for x in tmp_dir.glob('col*_complete')][0])
-
-    logger.debug(
-        "Converting completezip at '{}' to litezip".format(extracted_dir))
-    convert_completezip(extracted_dir)
-
-    logger.debug(
-        "Removing resource files in {}".format(extracted_dir))
-    for dirpath, dirnames, filenames in os.walk(str(extracted_dir)):
-        for name in filenames:
-            full_path = os.path.join(dirpath, name)
-            if imghdr.what(full_path):
-                os.remove(full_path)
-
-    logger.debug(
-        "Cleaning up extraction data at '{}'".format(tmp_dir))
-    shutil.copytree(str(extracted_dir), str(output_dir))
-    shutil.rmtree(str(tmp_dir))
+    if 'contents' in node:
+        for child in node['contents']:
+            _write_node(child, base_url, out_dir, pbar)
