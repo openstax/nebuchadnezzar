@@ -104,7 +104,7 @@ filename_by_type = {'application/vnd.org.cnx.collection': 'collection.xml',
 
 
 def _safe_name(name):
-    return name.replace('/', '-')
+    return name.replace('/', '∕').replace(':', '∶')
 
 
 def _write_node(node, base_url, out_dir, pbar, book_tree=False, pos=0):
