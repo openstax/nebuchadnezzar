@@ -1,7 +1,8 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0"?>
 <document xmlns="http://cnx.rice.edu/cnxml" xmlns:md="http://cnx.rice.edu/mdml/0.4" xmlns:bib="http://bibtexml.sf.net/" xmlns:q="http://cnx.rice.edu/qml/1.0" xmlns:md1="http://cnx.rice.edu/mdml" id="id1165037135379" module-id="m12345" cnxml-version="0.7">
   <title>A Student to Student Intro to IDE Programming and CCS4</title>
-<metadata xmlns:md="http://cnx.rice.edu/mdml" mdml-version="0.5">
+<metadata xmlns:md="http://cnx.rice.edu/mdml"
+          mdml-version="0.5">
   <!-- WARNING! The 'metadata' section is read only. Do not edit below.
        Changes to the metadata section in the source will not be saved. -->
   <md:repository>http://cnx.org/content</md:repository>
@@ -32,7 +33,7 @@
     <md:role type="editor">ww2</md:role>
     <md:role type="translator">ww2</md:role>
   </md:roles>
-  <md:license url="http://creativecommons.org/licenses/by/3.0/"/>
+  <md:license url="http://creativecommons.org/licenses/by/3.0/" />
   <!-- For information on license requirements for use or modification, see license url in the
        above <md:license> element.
        For information on formatting required attribution, see the URL:

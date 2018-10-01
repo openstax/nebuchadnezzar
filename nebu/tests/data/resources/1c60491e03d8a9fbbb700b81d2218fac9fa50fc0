@@ -1,6 +1,19 @@
-<?xml version='1.0' encoding='utf-8'?>
-<col:collection xmlns="http://cnx.rice.edu/collxml" xmlns:cnx="http://cnx.rice.edu/cnxml" xmlns:cnxorg="http://cnx.rice.edu/system-info" xmlns:md="http://cnx.rice.edu/mdml" xmlns:col="http://cnx.rice.edu/collxml" xmlns:cnxml="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:q="http://cnx.rice.edu/qml/1.0" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:bib="http://bibtexml.sf.net/" xmlns:cc="http://web.resource.org/cc/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xml:lang="en">
-  <metadata xmlns:md="http://cnx.rice.edu/mdml" mdml-version="0.5">
+<?xml version="1.0"?>
+<col:collection xmlns="http://cnx.rice.edu/collxml"
+                xmlns:cnx="http://cnx.rice.edu/cnxml"
+                xmlns:cnxorg="http://cnx.rice.edu/system-info"
+                xmlns:md="http://cnx.rice.edu/mdml"
+                xmlns:col="http://cnx.rice.edu/collxml"
+                xmlns:cnxml="http://cnx.rice.edu/cnxml"
+                xmlns:m="http://www.w3.org/1998/Math/MathML"
+                xmlns:q="http://cnx.rice.edu/qml/1.0"
+                xmlns:xhtml="http://www.w3.org/1999/xhtml"
+                xmlns:bib="http://bibtexml.sf.net/"
+                xmlns:cc="http://web.resource.org/cc/"
+                xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                xml:lang="en">
+  <metadata xmlns:md="http://cnx.rice.edu/mdml"
+          mdml-version="0.5">
   <!-- WARNING! The 'metadata' section is read only. Do not edit below.
        Changes to the metadata section in the source will not be saved. -->
 
@@ -51,7 +64,7 @@
     
   </md:roles>
 
-  <md:license url="http://creativecommons.org/licenses/by/3.0/"/>
+  <md:license url="http://creativecommons.org/licenses/by/3.0/" />
   <!-- For information on license requirements for use or modification, see license url in the
        above <md:license> element.
        For information on formatting required attribution, see the URL:
@@ -100,26 +113,32 @@
 
   <col:parameters>
     <col:param name="real-imaginary-notation" value="font"/>
-    <col:param name="and-or-notation" value="propositional-logic"/>
+    <col:param name="and-or-notation"
+               value="propositional-logic"/>
     <col:param name="gradient-notation" value="text"/>
     <col:param name="mean-notation" value="bar"/>
     <col:param name="remainder-notation" value="text"/>
     <col:param name="conjugate-notation" value="bar"/>
     <col:param name="imaginary-i-notation" value="i"/>
-    <col:param name="scalar-product-notation" value="angle-bracket"/>
+    <col:param name="scalar-product-notation"
+               value="angle-bracket"/>
     <col:param name="print-font-size" value="10pt"/>
     <col:param name="curl-notation" value="text"/>
-    <col:param name="for-all-equation-layout" value="symbolic"/>
+    <col:param name="for-all-equation-layout"
+               value="symbolic"/>
     <col:param name="vector-notation" value="bold"/>
     <col:param name="print-paper-size" value="8.5x11"/>
     <col:param name="print-font" value="computer-modern"/>
     <col:param name="print-style" value=""/>
-    <col:param name="print-paragraph-spacing" value="compact"/>
+    <col:param name="print-paragraph-spacing"
+               value="compact"/>
   </col:parameters>
   
   <col:content>
     
-      <col:module document="m42303" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.1">
+      <col:module document="m42303" version="latest"
+                  repository="http://cnx.org/content"
+                  cnxorg:version-at-this-collection-version="1.1">
         <md:title>Introduction to Quartus and Circuit Diagram Design</md:title>
         
         
@@ -129,7 +148,9 @@
       
     
     
-      <col:module document="m42302" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.3">
+      <col:module document="m42302" version="latest"
+                  repository="http://cnx.org/content"
+                  cnxorg:version-at-this-collection-version="1.3">
         <md:title>A Quartus Project from Start to Finish: 2 Bit Mux Tutorial</md:title>
         
         
@@ -139,7 +160,9 @@
       
     
     
-      <col:module document="m42304" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.3">
+      <col:module document="m42304" version="latest"
+                  repository="http://cnx.org/content"
+                  cnxorg:version-at-this-collection-version="1.3">
         <md:title>Lab 1-1: 4-Bit Mux and all NAND/NOR Mux</md:title>
         
         
@@ -149,7 +172,9 @@
       
     
     
-      <col:module document="m37151" version="1.4" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.5">
+      <col:module document="m37151" version="1.4"
+                  repository="http://cnx.org/content"
+                  cnxorg:version-at-this-collection-version="1.5">
         <md:title>Lab 3-1 Basic MSP430 Assembly from Roots in LC-3</md:title>
         
         
@@ -159,7 +184,9 @@
       
     
     
-      <col:module document="m40643" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.1">
+      <col:module document="m40643" version="latest"
+                  repository="http://cnx.org/content"
+                  cnxorg:version-at-this-collection-version="1.1">
         <md:title>Lab 3-2 Digital Input and Output with the MSP430</md:title>
         
         
@@ -169,7 +196,9 @@
       
     
     
-      <col:module document="m37217" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.2">
+      <col:module document="m37217" version="latest"
+                  repository="http://cnx.org/content"
+                  cnxorg:version-at-this-collection-version="1.2">
         <md:title>Lab 4-1 Interrupt Driven Programming in MSP430 Assembly</md:title>
         
         
@@ -179,7 +208,9 @@
       
     
     
-      <col:module document="m40645" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.1">
+      <col:module document="m40645" version="latest"
+                  repository="http://cnx.org/content"
+                  cnxorg:version-at-this-collection-version="1.1">
         <md:title>Lab 4-2 Putting It All Together</md:title>
         
         
@@ -189,7 +220,9 @@
       
     
     
-      <col:module document="m37386" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.3">
+      <col:module document="m37386" version="latest"
+                  repository="http://cnx.org/content"
+                  cnxorg:version-at-this-collection-version="1.3">
         <md:title>Lab 5-1 C Language Programming through the ADC and the MSP430</md:title>
         
         
@@ -199,7 +232,9 @@
       
     
     
-      <col:module document="m40646" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.1">
+      <col:module document="m40646" version="latest"
+                  repository="http://cnx.org/content"
+                  cnxorg:version-at-this-collection-version="1.1">
         <md:title>Lab 5-2 Using C and the ADC for "Real World" Applications with the MSP430</md:title>
         
         
@@ -220,7 +255,9 @@
         <col:content>
           
     
-      <col:module document="m37152" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.3">
+      <col:module document="m37152" version="latest"
+                  repository="http://cnx.org/content"
+                  cnxorg:version-at-this-collection-version="1.3">
         <md:title>MSP430 LaunchPad Test Circuit Breadboarding Instructions</md:title>
         
         
@@ -230,7 +267,9 @@
       
     
     
-      <col:module document="m37154" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.2">
+      <col:module document="m37154" version="latest"
+                  repository="http://cnx.org/content"
+                  cnxorg:version-at-this-collection-version="1.2">
         <md:title>A Student to Student Intro to IDE Programming and CCS4</md:title>
         
         

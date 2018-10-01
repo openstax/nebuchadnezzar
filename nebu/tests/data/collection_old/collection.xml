@@ -5,14 +5,14 @@
        Changes to the metadata section in the source will not be saved. -->
 
   <md:repository>http://cnx.org/content</md:repository>
-  <md:content-url>http://cnx.org/content/col11405/1.2</md:content-url>
+  <md:content-url>http://cnx.org/content/col11405/1.1</md:content-url>
   <md:content-id>col11405</md:content-id>
   <md:title>Intro to Computational Engineering: Elec 220 Labs</md:title>
   
   
-  <md:version>1.2</md:version>
+  <md:version>1.1</md:version>
   <md:created>2011/05/24 10:31:56.888 GMT-5</md:created>
-  <md:revised>2013/03/11 22:52:33.244 GMT-5</md:revised>
+  <md:revised>2012/01/19 22:23:06.516 US/Central</md:revised>
 
   <md:actors>
     
@@ -45,8 +45,8 @@
   </md:actors>
   <md:roles>
     <md:role type="author">mwjhnsn jedifan42</md:role>
-    <md:role type="maintainer">mwjhnsn jedifan42 cavallar</md:role>
-    <md:role type="licensor">mwjhnsn jedifan42 cavallar</md:role>
+    <md:role type="maintainer">mwjhnsn cavallar jedifan42</md:role>
+    <md:role type="licensor">mwjhnsn cavallar jedifan42</md:role>
     
     
   </md:roles>
@@ -113,7 +113,6 @@
     <col:param name="vector-notation" value="bold"/>
     <col:param name="print-paper-size" value="8.5x11"/>
     <col:param name="print-font" value="computer-modern"/>
-    <col:param name="print-style" value=""/>
     <col:param name="print-paragraph-spacing" value="compact"/>
   </col:parameters>
   
@@ -129,7 +128,7 @@
       
     
     
-      <col:module document="m42302" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.3">
+      <col:module document="m42302" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.1">
         <md:title>A Quartus Project from Start to Finish: 2 Bit Mux Tutorial</md:title>
         
         
@@ -139,7 +138,7 @@
       
     
     
-      <col:module document="m42304" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.3">
+      <col:module document="m42304" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.2">
         <md:title>Lab 1-1: 4-Bit Mux and all NAND/NOR Mux</md:title>
         
         
@@ -149,7 +148,7 @@
       
     
     
-      <col:module document="m37151" version="1.4" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.5">
+      <col:module document="m37151" version="latest" repository="http://cnx.org/content" cnxorg:version-at-this-collection-version="1.4">
         <md:title>Lab 3-1 Basic MSP430 Assembly from Roots in LC-3</md:title>
         
         

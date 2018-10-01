@@ -1,8 +1,9 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0"?>
 <document xmlns="http://cnx.rice.edu/cnxml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:bib="http://bibtexml.sf.net/" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:q="http://cnx.rice.edu/qml/1.0" id="new" cnxml-version="0.7" module-id="new">
 
 <title>Interrupt Driven Programming in MSP430 Assembly</title>
-<metadata xmlns:md="http://cnx.rice.edu/mdml" mdml-version="0.5">
+<metadata xmlns:md="http://cnx.rice.edu/mdml"
+          mdml-version="0.5">
   <!-- WARNING! The 'metadata' section is read only. Do not edit below.
        Changes to the metadata section in the source will not be saved. -->
   <md:repository>http://cnx.org/content</md:repository>
@@ -25,7 +26,7 @@
     <md:role type="maintainer">mwjhnsn</md:role>
     <md:role type="licensor">mwjhnsn</md:role>
   </md:roles>
-  <md:license url="http://creativecommons.org/licenses/by/3.0/"/>
+  <md:license url="http://creativecommons.org/licenses/by/3.0/" />
   <!-- For information on license requirements for use or modification, see license url in the
        above <md:license> element.
        For information on formatting required attribution, see the URL:
