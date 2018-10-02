@@ -107,10 +107,14 @@ def _safe_name(name):
     return name.replace('/', '∕').replace(':', '∶')
 
 
-def _write_node(node, base_url, out_dir, pbar, book_tree=False, pos=0):
+def _write_node(node, base_url, out_dir, pbar, book_tree=False, pos=0, lvl=0):
     """Write out a tree node"""
     if book_tree:
-        if pos > 0:
+        #  HACK Prepending zero-filled numbers to folders to fix the sort order
+        if lvl > 0:
+            #  HACK - the silly don't number Preface logic - let's use 00
+            if lvl == 1 and pos == 1 and 'Preface' in node['title']:
+                pos = 0
             dirname = '{:02d} {}'.format(pos, _safe_name(node['title']))
         else:
             dirname = _safe_name(node['title'])
@@ -142,4 +146,4 @@ def _write_node(node, base_url, out_dir, pbar, book_tree=False, pos=0):
         pos = 0
         for child in node['contents']:
             pos += 1
-            _write_node(child, base_url, out_dir, pbar, book_tree, pos)
+            _write_node(child, base_url, out_dir, pbar, book_tree, pos, lvl + 1)
