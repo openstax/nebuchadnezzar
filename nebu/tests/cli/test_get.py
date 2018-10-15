@@ -62,7 +62,8 @@ class TestGetCmd:
 
         # Register subcollection/chapter as 404
         register_404(requests_mock,
-                     'https://archive.cnx.org/contents/8ddfc8de-5164-5828-9fed-d0ed17edb489@2.1')
+                     'https://archive.cnx.org/contents/'
+                     '8ddfc8de-5164-5828-9fed-d0ed17edb489@2.1')
 
         from nebu.cli.main import cli
         args = ['get', 'test-env', col_id, col_version]
@@ -110,7 +111,8 @@ class TestGetCmd:
 
         # Register subcollection/chapter as 404
         register_404(requests_mock,
-                     'https://archive.cnx.org/contents/8ddfc8de-5164-5828-9fed-d0ed17edb489@2.1')
+                     'https://archive.cnx.org/contents/'
+                     '8ddfc8de-5164-5828-9fed-d0ed17edb489@2.1')
 
         from nebu.cli.main import cli
         args = ['get', '-t', 'test-env', col_id, col_version]
@@ -215,7 +217,8 @@ class TestGetCmd:
         with monkeypatch.context() as m:
             m.setattr('builtins.input', lambda x: "y")
             from nebu.cli.main import cli
-            args = ['get', 'test-env', '-t', '-d', 'mydir', col_id, col_version]
+            args = ['get', 'test-env', '-t',
+                    '-d', 'mydir', col_id, col_version]
             result = invoker(cli, args)
 
         assert result.exit_code == 0
@@ -290,7 +293,8 @@ class TestGetCmd:
 
         # Register subcollection/chapter as 404
         register_404(requests_mock,
-                     'https://archive.cnx.org/contents/8ddfc8de-5164-5828-9fed-d0ed17edb489@2.1')
+                     'https://archive.cnx.org/contents/'
+                     '8ddfc8de-5164-5828-9fed-d0ed17edb489@2.1')
 
         from nebu.cli.main import cli
         args = ['get', 'test-env', col_id, col_version]

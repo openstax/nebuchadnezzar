@@ -135,7 +135,7 @@ def _write_node(node, base_url, out_dir, pbar, book_tree=False, pos=0, lvl=0):
             write_dir = write_dir / metadata['legacy_id']
             os.mkdir(str(write_dir))
         filepath = write_dir / filename
-        # core files are xml - this parse/serialize removes XML numeric entities
+        # core files are XML - this parse/serialize removes numeric entities
         filepath.write_bytes(etree.tostring(etree.XML(file_resp.text),
                                             encoding='utf-8',
                                             xml_declaration=True))
@@ -146,4 +146,5 @@ def _write_node(node, base_url, out_dir, pbar, book_tree=False, pos=0, lvl=0):
         pos = 0
         for child in node['contents']:
             pos += 1
-            _write_node(child, base_url, out_dir, pbar, book_tree, pos, lvl + 1)
+            _write_node(child, base_url, out_dir, pbar,
+                        book_tree, pos, lvl + 1)
