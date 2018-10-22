@@ -20,7 +20,7 @@
     ],
     "baked": null,
     "buyLink": null,
-    "collated": false,
+    "collated": true,
     "created": "2011-05-24T15:31:56Z",
     "doctype": "",
     "googleAnalytics": null,
