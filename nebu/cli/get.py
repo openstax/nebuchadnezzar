@@ -42,6 +42,10 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree):
     if resp.status_code >= 400:
         raise MissingContent(col_id, col_version)
     col_metadata = resp.json()
+    if col_metadata['collated']:
+        url = resp.url + '?as_collated=False'
+        resp = requests.get(url)
+        col_metadata = resp.json()
     uuid = col_metadata['id']
     version = col_metadata['version']
 
@@ -82,21 +86,27 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree):
     tree = col_metadata['tree']
     os.mkdir(str(output_dir))
 
-    num_pages = _count_leaves(tree) + 1
-    label = 'Downloading to {}'.format(output_dir.relative_to(Path.cwd()))
+    num_pages = _count_leaves(tree) + 1  # Num. of xml files to fetch
+    label = 'Getting {}'.format(output_dir.relative_to(Path.cwd()))
     with click.progressbar(length=num_pages,
                            label=label,
+                           width=0,
                            show_pos=True) as pbar:
-        _write_node(tree, base_url, output_dir, pbar, book_tree)
+        _write_node(tree, base_url, output_dir, book_tree, pbar)
 
 
-def _count_leaves(node, count=0):
+def _count_leaves(node):
     if 'contents' in node:
-        for child in node['contents']:
-            count = _count_leaves(child, count)
-        return count
+        return sum([_count_leaves(child) for child in node['contents']])
     else:
-        return count + 1
+        return 1
+
+
+def _tree_depth(node):
+    if 'contents' in node:
+        return max([_tree_depth(child) for child in node['contents']]) + 1
+    else:
+        return 0
 
 
 filename_by_type = {'application/vnd.org.cnx.collection': 'collection.xml',
@@ -107,23 +117,30 @@ def _safe_name(name):
     return name.replace('/', '∕').replace(':', '∶')
 
 
-def _write_node(node, base_url, out_dir, pbar, book_tree=False, pos=0, lvl=0):
-    """Write out a tree node"""
+def _write_node(node, base_url, out_dir, book_tree=False,
+                pbar=None, depth=None, pos={0: 0}, lvl=0):
+    """Recursively write out contents of a book
+       Arguments are:
+        root of the json tree, archive url to fetch from, existing directory
+       to write out to, format to write (book tree or flat) as well as a
+       click progress bar, if desired. Depth is height of tree, used to reset
+       the lowest level counter (pages) per chapter. All other levels (Chapter,
+       unit) count up for entire book. Remaining args are used for recursion"""
+    if depth is None:
+        depth = _tree_depth(node)
     if book_tree:
         #  HACK Prepending zero-filled numbers to folders to fix the sort order
         if lvl > 0:
-            #  HACK - the silly don't number Preface logic - let's use 00
-            if lvl == 1 and pos == 1 and 'Preface' in node['title']:
-                pos = 0
-            dirname = '{:02d} {}'.format(pos, _safe_name(node['title']))
+            dirname = '{:02d} {}'.format(pos[lvl], _safe_name(node['title']))
         else:
-            dirname = _safe_name(node['title'])
+            dirname = _safe_name(node['title'])  # book name gets no number
 
         out_dir = out_dir / dirname
         os.mkdir(str(out_dir))
 
     write_dir = out_dir  # Allows nesting only for book_tree case
 
+    # Fetch and store the core file for each node
     resp = requests.get('{}/contents/{}'.format(base_url, node['id']))
     if resp:  # Subcollections cannot (yet) be fetched directly
         metadata = resp.json()
@@ -139,12 +156,21 @@ def _write_node(node, base_url, out_dir, pbar, book_tree=False, pos=0, lvl=0):
         filepath.write_bytes(etree.tostring(etree.XML(file_resp.text),
                                             encoding='utf-8',
                                             xml_declaration=True))
-        pbar.update(1)
+        if pbar is not None:
+            pbar.update(1)
         # TODO Future - fetch all resources, if requested
 
-    if 'contents' in node:
-        pos = 0
+    if 'contents' in node:  # Top-level or subcollection - recurse
+        lvl += 1
+        if lvl not in pos:
+            pos[lvl] = 0
+        if lvl == depth:  # Reset counter for bottom-most level: pages
+            pos[lvl] = 0
         for child in node['contents']:
-            pos += 1
-            _write_node(child, base_url, out_dir, pbar,
-                        book_tree, pos, lvl + 1)
+            #  HACK - the silly don't number Preface logic - let's use 00
+            if lvl == 1 and pos[1] == 0 and 'Preface' in child['title']:
+                pos[lvl] = 0
+            else:
+                pos[lvl] += 1
+            _write_node(child, base_url, out_dir, book_tree, pbar, depth,
+                        pos, lvl)
