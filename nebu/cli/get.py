@@ -128,6 +128,8 @@ def _write_node(node, base_url, out_dir, book_tree=False,
        unit) count up for entire book. Remaining args are used for recursion"""
     if depth is None:
         depth = _tree_depth(node)
+        pos = {0: 0}
+        lvl = 0
     if book_tree:
         #  HACK Prepending zero-filled numbers to folders to fix the sort order
         if lvl > 0:
