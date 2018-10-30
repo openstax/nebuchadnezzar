@@ -9,6 +9,8 @@ CONFIG_SECTION_ENVIRON_PREFIX = 'environ-'
 INITIAL_DEFAULT_CONFIG = """\
 [settings]
 
+# default_format = tree|flat
+
 # [environ-<short-name>]
 # url = <base-url-to-the-environment>
 
@@ -83,10 +85,14 @@ def discover_settings():
         },
     }
     for section in config.sections():
-        if not section.startswith(CONFIG_SECTION_ENVIRON_PREFIX):
-            continue  # ignore all other sections
-        short_name = section[len(CONFIG_SECTION_ENVIRON_PREFIX):]
-        settings['environs'][short_name] = dict(config[section])
+        if section.startswith(CONFIG_SECTION_ENVIRON_PREFIX):
+            short_name = section[len(CONFIG_SECTION_ENVIRON_PREFIX):]
+            settings['environs'][short_name] = dict(config[section])
+        elif section == 'settings':
+            settings.update(dict(config[section]))
+        else:
+            # Ignore other sections
+            pass
     return settings
 
 

@@ -18,8 +18,8 @@ from .exceptions import (MissingContent,
 @common_params
 @click.option('-d', '--output-dir', type=click.Path(),
               help="output directory name (can't previously exist)")
-@click.option('-t', '--book-tree', is_flag=True,
-              help="create human-friendly book-tree")
+@click.option('-t/-f', '--book-tree/--flat', is_flag=True, default=None,
+              help="create book tree or flat structure")
 @click.option('-r', '--get-resources', is_flag=True, default=False,
               help="Also get all resources (images)")
 @click.argument('env')
@@ -28,6 +28,10 @@ from .exceptions import (MissingContent,
 @click.pass_context
 def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
     """download and expand the completezip to the current working directory"""
+
+    # Set book-tree
+    if book_tree is None:
+        book_tree = ctx.obj['settings'].get('default_format') == 'tree'
 
     base_url = build_archive_url(ctx, env)
 
