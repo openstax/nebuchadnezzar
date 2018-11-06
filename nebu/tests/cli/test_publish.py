@@ -26,6 +26,17 @@ class ResponseCallback:
         return json.dumps(self.data)
 
 
+def mock_successful_publish_ping(requests_mock):
+    publish_ping_url = 'https://cnx.org/api/publish-ping'
+
+    requests_mock.register_uri(
+        'POST',
+        publish_ping_url,
+        status_code=200,
+        text='200',
+    )
+
+
 # This is the response that would come out of Press given
 # the data in data/collection.
 COLLECTION_PUBLISH_PRESS_RESP_DATA = [
@@ -75,13 +86,7 @@ COLLECTION_PUBLISH_PRESS_RESP_DATA = [
 class TestPublishCmd:
 
     def test_in_cwd(self, datadir, monkeypatch, requests_mock, invoker):
-        publish_ping_url = 'https://cnx.org/api/publish-ping'
-        requests_mock.register_uri(
-            'POST',
-            publish_ping_url,
-            status_code=200,
-            text='200',
-        )
+        mock_successful_publish_ping(requests_mock)
 
         id = 'collection'
         publisher = 'CollegeStax'
@@ -145,13 +150,7 @@ class TestPublishCmd:
         assert included_files == expected_files
 
     def test_with_resource(self, datadir, monkeypatch, requests_mock, invoker):
-        publish_ping_url = 'https://cnx.org/api/publish-ping'
-        requests_mock.register_uri(
-            'POST',
-            publish_ping_url,
-            status_code=200,
-            text='200',
-        )
+        mock_successful_publish_ping(requests_mock)
 
         id = 'collection_resources'
         publisher = 'CollegeStax'
@@ -214,13 +213,7 @@ class TestPublishCmd:
 
     def test_outside_cwd(self, datadir, monkeypatch,
                          requests_mock, invoker):
-        publish_ping_url = 'https://cnx.org/api/publish-ping'
-        requests_mock.register_uri(
-            'POST',
-            publish_ping_url,
-            status_code=200,
-            text='200',
-        )
+        mock_successful_publish_ping(requests_mock)
 
         id = 'collection'
         publisher = 'CollegeStax'
@@ -284,13 +277,7 @@ class TestPublishCmd:
 
     def test_with_invalid_content(self, datadir, monkeypatch,
                                   requests_mock, invoker):
-        publish_ping_url = 'https://cnx.org/api/publish-ping'
-        requests_mock.register_uri(
-            'POST',
-            publish_ping_url,
-            status_code=200,
-            text='200',
-        )
+        mock_successful_publish_ping(requests_mock)
 
         id = 'invalid_collection'
         publisher = 'CollegeStax'
@@ -320,6 +307,7 @@ class TestPublishCmd:
         message = 'mEssAgE'
         monkeypatch.setenv('XXX_PUBLISHER', publisher)
 
+        # Mock unsuccessful publish ping
         publish_ping_url = 'https://cnx.org/api/publish-ping'
         requests_mock.register_uri(
             'POST',
@@ -363,13 +351,7 @@ class TestPublishCmd:
         mock_request = MockRequest()
         auth(mock_request)
 
-        publish_ping_url = 'https://cnx.org/api/publish-ping'
-        requests_mock.register_uri(
-            'POST',
-            publish_ping_url,
-            status_code=200,
-            text='200',
-        )
+        mock_successful_publish_ping(requests_mock)
 
         requests_mock.register_uri(
             'POST',
@@ -413,13 +395,7 @@ class TestPublishCmd:
             text='400',
         )
 
-        publish_ping_url = 'https://cnx.org/api/publish-ping'
-        requests_mock.register_uri(
-            'POST',
-            publish_ping_url,
-            status_code=200,
-            text='200',
-        )
+        mock_successful_publish_ping(requests_mock)
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
@@ -443,6 +419,8 @@ class TestPublishCmd:
 
     def test_skip_validation(self, datadir, monkeypatch, requests_mock,
                              invoker):
+        mock_successful_publish_ping(requests_mock)
+
         id = 'collection'
         publisher = 'CollegeStax'
         message = 'mEssAgE'
@@ -457,14 +435,6 @@ class TestPublishCmd:
             url,
             status_code=200,
             text=resp_callback,
-        )
-
-        publish_ping_url = 'https://cnx.org/api/publish-ping'
-        requests_mock.register_uri(
-            'POST',
-            publish_ping_url,
-            status_code=200,
-            text='200',
         )
 
         # Stub the call for validation
