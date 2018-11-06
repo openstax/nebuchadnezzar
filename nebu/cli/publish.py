@@ -29,6 +29,16 @@ def parse_book_tree(bookdir):
 
 
 def _publish(base_url, struct, message, username, password):
+    """Check auth credentials before doing anything"""
+    auth = HTTPBasicAuth(username, password)
+    auth_ping_url = '{}/api/publish-ping'.format(base_url)
+    auth_ping_resp = requests.post(auth_ping_url, auth=auth)
+
+    if auth_ping_resp.status_code == 401:
+        logger.debug('Temporary raw output...')
+        logger.error('Bad credentials: \n{}'.format(auth_ping_resp.content))
+        return False
+
     """Publish the struct to a repository"""
     collection_id = struct[0].id
     # Base encapsulating directory within the zipfile
@@ -63,7 +73,6 @@ def _publish(base_url, struct, message, username, password):
 
     url = '{}/api/publish-litezip'.format(base_url)
     headers = {'X-API-Version': '3'}
-    auth = HTTPBasicAuth(username, password)
 
     # FIXME We don't have nor want explicit setting of the publisher.
     #       The publisher will come through as part of the authentication
@@ -97,10 +106,6 @@ def _publish(base_url, struct, message, username, password):
         #      implementation to work with models to make this work easier.
         logger.debug('Temporary raw output...')
         logger.error('ERROR: \n{}'.format(resp.content))
-        return False
-    elif resp.status_code == 401:
-        logger.debug('Temporary raw output...')
-        logger.error('Bad credentials: \n{}'.format(resp.content))
         return False
     else:  # pragma: no cover
         logger.error("unknown response:\n  status: {}\n  contents: {}"
