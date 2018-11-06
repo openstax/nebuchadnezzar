@@ -320,20 +320,6 @@ class TestPublishCmd:
         message = 'mEssAgE'
         monkeypatch.setenv('XXX_PUBLISHER', publisher)
 
-        # Mock the publishing request
-        url = 'https://cnx.org/api/publish-litezip'
-
-        auth = HTTPBasicAuth('username', 'password')
-        mock_request = MockRequest()
-        auth(mock_request)
-
-        requests_mock.register_uri(
-            'POST',
-            url,
-            status_code=401,
-            text='401',
-        )
-
         publish_ping_url = 'https://cnx.org/api/publish-ping'
         requests_mock.register_uri(
             'POST',
@@ -345,7 +331,7 @@ class TestPublishCmd:
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
         args = ['publish', 'test-env', str(datadir / id), '-m', message,
-                '--username', 'someusername', '--password', 'somepassword']
+                '--username', 'username', '--password', 'password']
         result = invoker(cli, args)
 
         # Check the results
@@ -373,7 +359,7 @@ class TestPublishCmd:
 
         # Mock the publishing request
         url = 'https://cnx.org/api/publish-litezip'
-        auth = HTTPBasicAuth('someusername', 'somepassword')
+        auth = HTTPBasicAuth('username', 'password')
         mock_request = MockRequest()
         auth(mock_request)
 
@@ -396,7 +382,7 @@ class TestPublishCmd:
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
         args = ['publish', 'test-env', str(datadir / id), '-m', message,
-                '--username', 'someusername', '--password', 'somepassword']
+                '--username', 'username', '--password', 'password']
         result = invoker(cli, args)
 
         # Check the results
@@ -522,18 +508,11 @@ class TestPublishCmd:
             status_code=401,
             text='401',
         )
-        # requests_mock.register_uri(
-        #     'POST',
-        #     publish_ping_url,
-        #     status_code=200,
-        #     text='200',
-        #     request_headers=mock_request.headers
-        # )
 
         from nebu.cli.main import cli
         # Use Current Working Directory (CWD)
         args = ['publish', 'test-env', str(datadir / id), '-m', message,
-                '--username', 'someusername', '--password', 'somepassword']
+                '--username', 'badusername', '--password', 'badpassword']
         result = invoker(cli, args)
 
         # Check the results
