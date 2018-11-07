@@ -29,14 +29,25 @@ def parse_book_tree(bookdir):
 
 
 def _publish(base_url, struct, message, username, password):
-    """Check auth credentials before doing anything"""
     auth = HTTPBasicAuth(username, password)
-    auth_ping_url = '{}/api/publish-ping'.format(base_url)
+
+    """Check for good credentials"""
+    auth_ping_url = '{}/api/auth-ping'.format(base_url)
     auth_ping_resp = requests.post(auth_ping_url, auth=auth)
 
     if auth_ping_resp.status_code == 401:
         logger.debug('Temporary raw output...')
         logger.error('Bad credentials: \n{}'.format(auth_ping_resp.content))
+        return False
+
+    """Check for permission to publish"""
+    publish_ping_url = '{}/api/publish-ping'.format(base_url)
+    publish_ping_resp = requests.post(publish_ping_url, auth=auth)
+
+    if publish_ping_resp.status_code == 401:
+        logger.debug('Temporary raw output...')
+        logger.error('Publishing not allowed: \n{}'.format(
+            publish_ping_resp.content))
         return False
 
     """Publish the struct to a repository"""
