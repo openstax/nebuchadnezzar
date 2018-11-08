@@ -112,7 +112,7 @@ def _publish(base_url, struct, message, username, password):
         logger.info('Publishing response: \n{}'
                     .format(pformat(resp.json())))
     elif resp.status_code == 400:
-        # This way be Errors
+        # This may be Errors
         # TODO Nicely format this stuff. Wait for the Bravado client
         #      implementation to work with models to make this work easier.
         logger.debug('Temporary raw output...')
