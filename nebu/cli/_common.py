@@ -1,4 +1,5 @@
 from functools import wraps
+from urllib.parse import urlparse, urlunparse
 
 import click
 
@@ -69,6 +70,19 @@ def get_base_url(context, environ_name):
         return context.obj['settings']['environs'][environ_name]['url']
     except KeyError:
         raise UnknownEnvironment(environ_name)
+
+
+def build_archive_url(context, environ_name):
+    # Build the archive base url
+    archive_url = get_base_url(context, environ_name)
+    parsed_url = urlparse(archive_url)
+    sep = len(parsed_url.netloc.split('.')) > 2 and '-' or '.'
+    url_parts = [
+        parsed_url.scheme,
+        'archive{}{}'.format(sep, parsed_url.netloc),
+    ] + list(parsed_url[2:])
+    archive_url = urlunparse(url_parts)
+    return archive_url
 
 
 def set_verbosity(verbose):

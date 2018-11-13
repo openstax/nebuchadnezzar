@@ -5,10 +5,9 @@ import requests
 
 from lxml import etree
 from pathlib import Path
-from urllib.parse import urlparse, urlunparse
 
 from ..logger import logger
-from ._common import common_params, confirm, get_base_url
+from ._common import common_params, confirm, get_base_url, build_archive_url
 from .exceptions import *  # noqa: F403
 
 
@@ -25,15 +24,7 @@ from .exceptions import *  # noqa: F403
 def get(ctx, env, col_id, col_version, output_dir, book_tree):
     """download and expand the completezip to the current working directory"""
 
-    # Build the base url
-    base_url = get_base_url(ctx, env)
-    parsed_url = urlparse(base_url)
-    sep = len(parsed_url.netloc.split('.')) > 2 and '-' or '.'
-    url_parts = [
-        parsed_url.scheme,
-        'archive{}{}'.format(sep, parsed_url.netloc),
-    ] + list(parsed_url[2:])
-    base_url = urlunparse(url_parts)
+    base_url = build_archive_url(ctx, env)
 
     col_hash = '{}/{}'.format(col_id, col_version)
     # Fetch metadata
@@ -154,6 +145,17 @@ def _write_node(node, base_url, out_dir, book_tree=False,
             write_dir = write_dir / metadata['legacy_id']
             os.mkdir(str(write_dir))
         filepath = write_dir / filename
+
+        def cache_sha():
+            # Cache this node's sha at its version.
+            # Creates a 'dot' file prepended by `.version_`
+            version_cache_file_path = write_dir / '.version_{}'.format(metadata['version']) # create dot file
+            sha1 = [res['id'] for res in metadata['resources'] if res['media_type'] == 'text/xml'][0]
+            version_cache_file_path.write_bytes(sha1.encode())
+
+        if 'version' in metadata:
+            cache_sha()
+
         # core files are XML - this parse/serialize removes numeric entities
         filepath.write_bytes(etree.tostring(etree.XML(file_resp.text),
                                             encoding='utf-8',
