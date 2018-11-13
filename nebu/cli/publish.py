@@ -28,6 +28,38 @@ def parse_book_tree(bookdir):
     return struct
 
 
+def gen_zip_file(base_file_path, struct):
+    # TODO Move this block of logic to litezip. Maybe?
+    _, zip_file = tempfile.mkstemp()
+    zip_file = Path(zip_file)
+
+    with zipfile.ZipFile(str(zip_file), 'w') as zb:
+        for model in struct:
+            files = []
+            # Write the content file into the zip.
+            if isinstance(model, Collection):
+                file = model.file
+                full_path = base_file_path / file.name
+                files.append((file, full_path))
+
+                for resource in model.resources:
+                    full_path = base_file_path / resource.filename
+                    files.append((resource.data, full_path))
+            else:  # Module
+                file = model.file
+                full_path = base_file_path / model.id / file.name
+                files.append((file, full_path))
+
+                for resource in model.resources:
+                    full_path = base_file_path / model.id / resource.filename
+                    files.append((resource.data, full_path))
+
+            for file, full_path in files:
+                zb.write(str(file), str(full_path))
+
+    return zip_file
+
+
 def _publish(base_url, struct, message, username, password):
     auth = HTTPBasicAuth(username, password)
 
@@ -56,31 +88,7 @@ def _publish(base_url, struct, message, username, password):
     base_file_path = Path(collection_id)
 
     # Zip it up!
-    # TODO Move this block of logic to litezip. Maybe?
-    _, zip_file = tempfile.mkstemp()
-    zip_file = Path(zip_file)
-    with zipfile.ZipFile(str(zip_file), 'w') as zb:
-        for model in struct:
-            files = []
-            # Write the content file into the zip.
-            if isinstance(model, Collection):
-                file = model.file
-                rel_file_path = base_file_path / model.file.name
-                files.append((file, rel_file_path))
-                for resource in model.resources:
-                    files.append((resource.data,
-                                  base_file_path / resource.filename))
-            else:  # Module
-                file = model.file
-                rel_file_path = base_file_path / model.id / model.file.name
-                files.append((file, rel_file_path))
-                for resource in model.resources:
-                    files.append((resource.data,
-                                  base_file_path /
-                                  model.id / resource.filename))
-
-            for file, rel_file_path in files:
-                zb.write(str(file), str(rel_file_path))
+    zip_file = gen_zip_file(base_file_path, struct)
 
     url = '{}/api/publish-litezip'.format(base_url)
     headers = {'X-API-Version': '3'}
