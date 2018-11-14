@@ -146,15 +146,11 @@ def _write_node(node, base_url, out_dir, book_tree=False,
             os.mkdir(str(write_dir))
         filepath = write_dir / filename
 
-        def cache_sha():
-            # Cache this node's sha at its version.
-            # Creates a 'dot' file prepended by `.version_`
-            version_cache_file_path = write_dir / '.version_{}'.format(metadata['version']) # create dot file
-            sha1 = [res['id'] for res in metadata['resources'] if res['media_type'] == 'text/xml'][0]
-            version_cache_file_path.write_bytes(sha1.encode())
-
-        if 'version' in metadata:
-            cache_sha()
+        """Create 'dot' file"""
+        dot_file_name = '.sha1sum'
+        for resource in metadata['resources']:
+            with (write_dir / dot_file_name).open('a') as s:
+                s.write('{} {}\n'.format(resource['id'], resource['filename']))
 
         # core files are XML - this parse/serialize removes numeric entities
         filepath.write_bytes(etree.tostring(etree.XML(file_resp.text),
