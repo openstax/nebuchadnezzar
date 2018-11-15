@@ -108,6 +108,13 @@ def _safe_name(name):
     return name.replace('/', '∕').replace(':', '∶')
 
 
+def create_dot_file(resources):
+    dot_file_name = '.sha1sum'
+    for resource in resources:
+        with (write_dir / dot_file_name).open('a') as s:
+            s.write('{} {}\n'.format(resource['id'], resource['filename']))
+
+
 def _write_node(node, base_url, out_dir, book_tree=False,
                 pbar=None, depth=None, pos={0: 0}, lvl=0):
     """Recursively write out contents of a book
@@ -146,11 +153,8 @@ def _write_node(node, base_url, out_dir, book_tree=False,
             os.mkdir(str(write_dir))
         filepath = write_dir / filename
 
-        """Create 'dot' file"""
-        dot_file_name = '.sha1sum'
-        for resource in metadata['resources']:
-            with (write_dir / dot_file_name).open('a') as s:
-                s.write('{} {}\n'.format(resource['id'], resource['filename']))
+        """Cache/store sha1-s for resources in a 'dot' file"""
+        create_dot_file(metadata['resources'])
 
         # core files are XML - this parse/serialize removes numeric entities
         filepath.write_bytes(etree.tostring(etree.XML(file_resp.text),
