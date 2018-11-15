@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile
 import zipfile
+import hashlib
 from pathlib import Path
 
 import click
@@ -16,7 +17,6 @@ from litezip import (
 from ._common import common_params, get_base_url, logger
 from .validate import is_valid
 
-
 def parse_book_tree(bookdir):
     """Converts filesystem booktree back to a struct"""
     struct = []
@@ -26,6 +26,39 @@ def parse_book_tree(bookdir):
         elif 'index.cnxml' in filenames:
             struct.append(parse_module(Path(dirname)))
     return struct
+
+
+def filter_what_changed(base_file_path, bunch_of_models):
+    changed = []
+
+    for model in bunch_of_models:
+        # calculate current sha1 of model.file
+        if isinstance(model, Resource):
+            if model.sha1 != find_cached_sha(model.file):
+                changed.append(model)
+        else:
+            if calculate_sha1(model.file) != find_cached_sha(model.file)
+                changed.append(model)
+    return changed
+
+
+def find_cached_sha(fpath): # find 'dot' file
+    dir_name = os.path.dirname(fpath)
+    dot_file_path = dir_name / '.sha1sum'
+
+    # TODO: what if there is no 'dot' file?
+    with dot_file_path.open('r') as dotf:
+        # get the sha based on the filename
+        sha1_fname = [line.split(' ') for line in dotf]
+        if sha1_fname[1] == fpath.name:
+            return sha1_fname[0]
+        return None # no sha1 found / not listed
+
+
+def calculate_sha1(fpath):
+    h = hashlib.sha1()
+    h.update(fpath.open('rb').read())
+    return h.hexdigest()
 
 
 def gen_zip_file(base_file_path, struct):
@@ -87,8 +120,10 @@ def _publish(base_url, struct, message, username, password):
     # Base encapsulating directory within the zipfile
     base_file_path = Path(collection_id)
 
+    modified = filter_what_changed(base_file_path, struct)
+
     # Zip it up!
-    zip_file = gen_zip_file(base_file_path, struct)
+    zip_file = gen_zip_file(base_file_path, modified)
 
     url = '{}/api/publish-litezip'.format(base_url)
     headers = {'X-API-Version': '3'}
