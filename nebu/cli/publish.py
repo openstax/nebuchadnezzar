@@ -12,6 +12,7 @@ from litezip import (
     parse_collection,
     parse_module,
     Collection,
+    Resource,
 )
 
 from ._common import common_params, get_base_url, logger
@@ -37,22 +38,26 @@ def filter_what_changed(base_file_path, bunch_of_models):
             if model.sha1 != find_cached_sha(model.file):
                 changed.append(model)
         else:
-            if calculate_sha1(model.file) != find_cached_sha(model.file)
+            if calculate_sha1(model.file) != find_cached_sha(model.file):
                 changed.append(model)
     return changed
 
 
 def find_cached_sha(fpath): # find 'dot' file
-    dir_name = os.path.dirname(fpath)
-    dot_file_path = dir_name / '.sha1sum'
+    dir_name = os.path.dirname(str(fpath))
 
-    # TODO: what if there is no 'dot' file?
-    with dot_file_path.open('r') as dotf:
-        # get the sha based on the filename
-        sha1_fname = [line.split(' ') for line in dotf]
-        if sha1_fname[1] == fpath.name:
-            return sha1_fname[0]
-        return None # no sha1 found / not listed
+    dot_file_path = Path(dir_name) / '.sha1sum'
+
+    try:
+        with dot_file_path.open('r') as dotf:
+            # get the sha based on the filename
+            sha1_fname = [line.split(' ') for line in dotf]
+            if sha1_fname[1] == fpath.name:
+                return sha1_fname[0]
+            return None # no sha1 found / not listed
+    except FileNotFoundError:
+        # Should we create a log entry? or terminal output?
+        return None
 
 
 def calculate_sha1(fpath):
