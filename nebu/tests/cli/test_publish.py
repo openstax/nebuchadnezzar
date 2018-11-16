@@ -1,4 +1,3 @@
-
 import io
 import zipfile
 from cgi import parse_multipart
@@ -540,3 +539,92 @@ class TestPublishCmd:
         #       the last line so we know we got to the correct place.
         # assert result.output == expected_output
         assert expected_output in result.output
+
+    def test_publish_only_what_changed(self, datadir, monkeypatch, requests_mock, invoker):
+        import os
+        from pathlib import Path
+        from nebu.cli._common import calculate_sha1
+        from nebu.cli.get import gen_resources_sha1_cache
+
+        mock_successful_ping('/auth-ping', requests_mock)
+        mock_successful_ping('/publish-ping', requests_mock)
+
+        contents_folder = 'collection_resources'
+        publisher = 'CollegeStax'
+        message = 'mEssAgE'
+        monkeypatch.chdir(str(datadir / contents_folder))
+        monkeypatch.setenv('XXX_PUBLISHER', publisher)
+
+        # Mock the publishing request
+        url = 'https://cnx.org/api/publish-litezip'
+        resp_callback = ResponseCallback(COLLECTION_PUBLISH_PRESS_RESP_DATA)
+        requests_mock.register_uri(
+            'POST',
+            url,
+            status_code=200,
+            text=resp_callback,
+        )
+
+        from nebu.cli.main import cli
+        # Use Current Working Directory (CWD)
+        args = ['publish', 'test-env', '.', '-m', message,
+                '--username', 'someusername', '--password', 'somepassword']
+        result = invoker(cli, args)
+
+        # Check the results
+        if result.exception:
+            raise result.exception
+        assert result.exit_code == 0
+        expected_output = (
+            'Great work!!! =D\n'
+        )
+        # FIXME Ignoring temporary formatting of output, just check for
+        #       the last line so we know we got to the correct place.
+        # assert result.output == expected_output
+        assert expected_output in result.output
+
+        # Check the sent contents
+        request_data = resp_callback.captured_request._request.body
+        # Discover the multipart/form-data boundry
+        boundary = request_data.split(b'\r\n')[0][2:]
+        form = parse_multipart(io.BytesIO(request_data),
+                               {'boundary': boundary})
+        assert form['publisher'][0] == publisher.encode('utf8')
+        assert form['message'][0] == message.encode('utf8')
+        # Check the zipfile for contents
+        with zipfile.ZipFile(io.BytesIO(form['file'][0])) as zb:
+            included_files = set(zb.namelist())
+        resources = set((
+            'LEaRN.png',
+            'collection.xml',
+            # this one won't be in the sha1 cache file
+            # to pretend that it's a new image:
+            # 'm37154/LEaRN.png',
+            'm37154/index.cnxml',
+            'm37217/index.cnxml',
+            'm37386/index.cnxml',
+            'm40645/index.cnxml',
+            'm40646/index.cnxml',
+            'm42303/index.cnxml',
+            # this one will have a different sha1 in the cache file
+            # to pretend that it was modified:
+            'm42304/index.cnxml',
+        ))
+
+        def append_resource_cache_to_dot_file(resource, full_path):
+            folder = os.path.dirname(str(full_path))
+            sha1 = calculate_sha1(full_path)
+            fname = full_path.name
+
+            with (Path(folder) / '.sha1sum').open('a') as df:
+                df.write('{} {}\n'.format(sha1, fname))
+
+
+        for res in resources:
+            full_path = datadir / contents_folder / res
+            append_resource_cache_to_dot_file(res, full_path)
+
+        # change the sha1 for the following cnxml to pretend that it changed.
+        # for resource in resources:
+        #     if resource['filename'] == 'col11405/m42304/index.cnxml':
+        #         resource['id'] = 'SomeDifferentSha1'

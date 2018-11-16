@@ -108,10 +108,10 @@ def _safe_name(name):
     return name.replace('/', '∕').replace(':', '∶')
 
 
-def create_dot_file(resources):
-    dot_file_name = '.sha1sum'
+def gen_resources_sha1_cache(write_dir, resources):
     for resource in resources:
-        with (write_dir / dot_file_name).open('a') as s:
+        with (write_dir / '.sha1sum').open('a') as s:
+            # NOTE: the id is the sha1
             s.write('{} {}\n'.format(resource['id'], resource['filename']))
 
 
@@ -154,7 +154,7 @@ def _write_node(node, base_url, out_dir, book_tree=False,
         filepath = write_dir / filename
 
         """Cache/store sha1-s for resources in a 'dot' file"""
-        create_dot_file(metadata['resources'])
+        gen_resources_sha1_cache(write_dir, metadata['resources'])
 
         # core files are XML - this parse/serialize removes numeric entities
         filepath.write_bytes(etree.tostring(etree.XML(file_resp.text),

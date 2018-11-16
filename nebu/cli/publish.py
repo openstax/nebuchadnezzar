@@ -2,7 +2,6 @@ import os
 import sys
 import tempfile
 import zipfile
-import hashlib
 from pathlib import Path
 
 import click
@@ -15,7 +14,7 @@ from litezip import (
     Resource,
 )
 
-from ._common import common_params, get_base_url, logger
+from ._common import common_params, get_base_url, logger, calculate_sha1
 from .validate import is_valid
 
 def parse_book_tree(bookdir):
@@ -58,12 +57,6 @@ def find_cached_sha(fpath): # find 'dot' file
     except FileNotFoundError:
         # Should we create a log entry? or terminal output?
         return None
-
-
-def calculate_sha1(fpath):
-    h = hashlib.sha1()
-    h.update(fpath.open('rb').read())
-    return h.hexdigest()
 
 
 def gen_zip_file(base_file_path, struct):
