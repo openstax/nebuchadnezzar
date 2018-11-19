@@ -40,104 +40,67 @@ def get_sha1s_dict(path):
     except FileNotFoundError:
         return {}
 
+
 def filter_what_changed(contents):
     # NOTE: contents is the output from parse_book_tree
     #       which is a list of tuples (<collection or module>, <sha1-s dict>)
-    changed = set()
+    changed = []
 
-    # remove the collection model from contents
-    # collection_tuple = [contents.remove((model, sha1s_dict)) for model, sha1s_dict in contents if isinstance(model, Collection)][0]
-    # for model, sha1s_dict in contents:
-    #     if isinstance(model, Collection)
     collection, coll_sha1s_dict = contents.pop(0) # NOTE: requires the first item to be the collection
-    # if isinstance(collection, Collection):
 
-    # collection, coll_sha1 = collection_tuple
     for model, sha1s_dict in contents:
-        # if isinstance(model, Collection):
-            # continue # to next iteration
-        # NOTE: model is a Module
-        # calculate current sha1 of model.file
-        # if calculate_sha1(model.file) != sha1s_dict.get(model.file.name.strip()):
-        #     # assume model changed.
-        #     changed.add(model)
-        changed_module_resources = []
+        new_mod_resources = []
         for resource in model.resources:
+            if '.sha1sum' == resource.filename:
+                # ignore cache files
+                continue
+
             cached_sha1 = sha1s_dict.get(resource.filename.strip())
-            # if resource HAS been modified,
-            if '.sha1sum' != resource.filename and (cached_sha1 is None or resource.sha1 != cached_sha1):
-                # keep it and assume model changed
-                # changed.add(model)
-                changed_module_resources.append(resource)
 
-        if len(changed_module_resources) > 0 or calculate_sha1(model.file) != sha1s_dict.get(model.file.name.strip()):
-            new_model = model._replace(resources = tuple(changed_module_resources))
-            changed.add(new_model)
+            # if resource is new or it has been modified
+            if cached_sha1 is None or resource.sha1 != cached_sha1:
+                new_mod_resources.append(resource)
 
-    # now check the Collection and the collection's resources!
-    # so, if any of the collection's resource changed, assume collection changed.
-    changed_collection_resources = []
+        # if the model changed or any of its resources
+        mod_cached_sha1 = sha1s_dict.get(model.file.name.strip())
+        mod_actual_sha1 = calculate_sha1(model.file)
+        if mod_actual_sha1 != mod_cached_sha1 or len(new_mod_resources) > 0:
+            new_model = model._replace(resources=tuple(new_mod_resources))
+            changed.append(new_model)
+
+    # Now check the Collection and the collection's resources.
+    # If any of the collection's resource changed, assume collection changed.
+    new_col_resources = []
     for resource in collection.resources:
+        if '.sha1sum' == resource.filename:
+            # ignore cache files
+            continue
+
         cached_sha1 = coll_sha1s_dict.get(resource.filename.strip())
-        # if resource is new or it has changed
-        if ('.sha1sum' != resource.filename) and (cached_sha1 is None or resource.sha1 != cached_sha1):
+
+        # if resource is new or it has been modified
+        if cached_sha1 is None or resource.sha1 != cached_sha1:
             # then the collection has changed.
-            # keep the resource in the collection.
-            changed_collection_resources.append(resource)
-            # else: # otherwise the collection has not changed, and remove the resource from the collection.
-            # v = list(collection.resources)
-            # v.remove(resource)
-            # collection.resources = tuple(v)
+            new_col_resources.append(resource)
 
-    changed = list(changed)
+    new_coll = None
+    if len(new_col_resources) > 0:
+        new_coll = collection._replace(resources=tuple(new_col_resources))
+        changed.insert(0, new_coll) # because _publish will expect this
 
-    new_collection = None
-    if len(changed_collection_resources) > 0:
-        new_collection = collection._replace(resources = tuple(changed_collection_resources))
-        changed.insert(0, new_collection)
+    # Also, if any modules (or resources) changed, assume collection changed.
+    cached_coll_sha1 = coll_sha1s_dict.get('collection.xml')
+    if len(changed) > 0 or coll_sha1s_dict.get('collection.xml') is None or \
+        cached_coll_sha1 != calculate_sha1(collection.file):
 
-
-    # if any modules (or resources) changed, assume collection changed.
-    if len(changed) > 0 or coll_sha1s_dict.get('collection.xml') is None or coll_sha1s_dict.get('collection.xml') != calculate_sha1(collection.file):
-        if new_collection is None:
-            new_collection = collection._replace(resources = tuple(changed_collection_resources))
-            changed.insert(0, new_collection)
+        if new_coll is None:
+            new_coll = collection._replace(resources=tuple(new_col_resources))
+            changed.insert(0, new_coll)
         else:
             changed.insert(0, collection)
         return changed
     else: # No changes! :D
         return []
-
-
-# def find_cached_sha(filepath):
-#     # Look for a 'dot' file in the same directory as file in filepath
-#     dir_name = os.path.dirname(str(filepath))
-#     dot_file_path = Path(dir_name) / '.sha1sum'
-
-#     try:
-#         with dot_file_path.open('r') as dotf:
-#             # get the sha based on the filename
-#             sha1_fname,  = [line.split('  ') for line in dotf][0]
-#     # If one is found, get the sha1 for file in filepath
-#             if sha1_fname[1] == filepath.name:
-#                 return sha1_fname[0]
-#             return None # no sha1 found / not listed
-#     except FileNotFoundError:
-#         # TODO: Should we create a log entry or terminal output?
-#         return None
-
-
-# def shas_by_filename(root_dir):
-#     struct = {}
-#     try:
-#         with open('{}/**/.sha1sum'.format(root_dir), 'r') as files:
-#             for sha_file in files:
-#                 for line in sha_file:
-#                     # struct = {{r['filename']: r for r in metadata['resources']}}
-#                     struct[line.split('  ')[1]]
-#         return struct
-#     except FileNotFoundError:
-#         return {}
 
 
 def gen_zip_file(base_file_path, struct):
