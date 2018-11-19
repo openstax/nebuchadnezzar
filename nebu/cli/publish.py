@@ -11,11 +11,11 @@ from litezip import (
     parse_collection,
     parse_module,
     Collection,
-    Resource,
 )
 
 from ._common import common_params, get_base_url, logger, calculate_sha1
 from .validate import is_valid
+
 
 def parse_book_tree(bookdir):
     """Converts filesystem booktree back to a struct"""
@@ -35,8 +35,8 @@ def get_sha1s_dict(path):
     """Returns a dict of sha1-s by filename"""
     try:
         with (path / '.sha1sum').open('r') as sha_file:
-            return {line.split('  ')[1].strip(): line.split('  ')[0].strip() for line in sha_file
-                    if not line.startswith('#')}
+            return {line.split('  ')[1].strip(): line.split('  ')[0].strip()
+                    for line in sha_file if not line.startswith('#')}
     except FileNotFoundError:
         return {}
 
@@ -46,7 +46,7 @@ def filter_what_changed(contents):
     #       which is a list of tuples (<collection or module>, <sha1-s dict>)
     changed = []
 
-    collection, coll_sha1s_dict = contents.pop(0) # NOTE: requires the first item to be the collection
+    collection, coll_sha1s_dict = contents.pop(0)
 
     for model, sha1s_dict in contents:
         new_mod_resources = []
@@ -86,12 +86,12 @@ def filter_what_changed(contents):
     new_coll = None
     if len(new_col_resources) > 0:
         new_coll = collection._replace(resources=tuple(new_col_resources))
-        changed.insert(0, new_coll) # because _publish will expect this
+        changed.insert(0, new_coll)  # because `_publish` will expect this
 
     # Also, if any modules (or resources) changed, assume collection changed.
     cached_coll_sha1 = coll_sha1s_dict.get('collection.xml')
     if len(changed) > 0 or coll_sha1s_dict.get('collection.xml') is None or \
-        cached_coll_sha1 != calculate_sha1(collection.file):
+       cached_coll_sha1 != calculate_sha1(collection.file):
 
         if new_coll is None:
             new_coll = collection._replace(resources=tuple(new_col_resources))
@@ -99,7 +99,7 @@ def filter_what_changed(contents):
         else:
             changed.insert(0, collection)
         return changed
-    else: # No changes! :D
+    else:  # No changes
         return []
 
 

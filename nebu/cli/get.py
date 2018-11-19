@@ -7,7 +7,7 @@ from lxml import etree
 from pathlib import Path
 
 from ..logger import logger
-from ._common import common_params, confirm, get_base_url, build_archive_url
+from ._common import common_params, confirm, build_archive_url
 from .exceptions import *  # noqa: F403
 
 

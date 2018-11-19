@@ -543,7 +543,8 @@ class TestPublishCmd:
         # assert result.output == expected_output
         assert expected_output in result.output
 
-    def test_publish_only_what_changed(self, datadir, monkeypatch, requests_mock, invoker):
+    def test_publish_only_what_changed(self, datadir, monkeypatch,
+                                       requests_mock, invoker):
         mock_successful_ping('/auth-ping', requests_mock)
         mock_successful_ping('/publish-ping', requests_mock)
 
@@ -617,7 +618,8 @@ class TestPublishCmd:
 
         assert actual_published == expected_published
 
-    def test_publish_cmd_with_no_cache(self, datadir, monkeypatch, requests_mock, invoker):
+    def test_publish_cmd_with_no_cache(self, datadir, monkeypatch,
+                                       requests_mock, invoker):
         """Test what happens when there is no .sha1sum file in any dir.
         """
         mock_successful_ping('/auth-ping', requests_mock)
@@ -689,7 +691,7 @@ class TestPublishCmd:
         assert actual_published == expected_published
 
     def test_publish_only_what_changed_with_tree(self, datadir, monkeypatch,
-        requests_mock, invoker):
+                                                 requests_mock, invoker):
         mock_successful_ping('/auth-ping', requests_mock)
         mock_successful_ping('/publish-ping', requests_mock)
 
