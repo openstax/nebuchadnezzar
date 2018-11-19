@@ -98,6 +98,6 @@ def set_verbosity(verbose):
 
 # NOTE: This code also exists in litezip. Consider using that one in the future.
 def calculate_sha1(fpath):
-    h = hashlib.sha1()
-    h.update(fpath.open('rb').read())
-    return h.hexdigest()
+    sha1 = hashlib.sha1()
+    sha1.update(fpath.open('rb').read())
+    return sha1.hexdigest()
