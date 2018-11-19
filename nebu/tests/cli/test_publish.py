@@ -591,8 +591,8 @@ class TestPublishCmd:
         assert form['message'][0] == message.encode('utf8')
         # Check the zipfile for contents
         with zipfile.ZipFile(io.BytesIO(form['file'][0])) as zb:
-            included_files = set(zb.namelist())
-        expected_files = set((
+            actual_published = set(zb.namelist())
+        expected_published = set((
             # Although these commented out files do exist in the directory,
             # they will not be published because their cached sha1 and
             # actual/calculated sha1 are equal, meaning there are no changes.
@@ -615,4 +615,75 @@ class TestPublishCmd:
             'col11405/collection.xml',
         ))
 
-        assert included_files == expected_files
+        assert actual_published == expected_published
+
+    def test_publish_cmd_with_no_cache(self, datadir, monkeypatch, requests_mock, invoker):
+        """Test what happens when there is no .sha1sum file in any dir.
+        """
+        mock_successful_ping('/auth-ping', requests_mock)
+        mock_successful_ping('/publish-ping', requests_mock)
+
+        contents_folder = 'collection'
+        publisher = 'CollegeStax'
+        message = 'mEssAgE'
+        monkeypatch.chdir(str(datadir / contents_folder))
+        monkeypatch.setenv('XXX_PUBLISHER', publisher)
+
+        # Mock the publishing request
+        url = 'https://cnx.org/api/publish-litezip'
+        resp_callback = ResponseCallback(COLLECTION_PUBLISH_PRESS_RESP_DATA)
+        requests_mock.register_uri(
+            'POST',
+            url,
+            status_code=200,
+            text=resp_callback,
+        )
+
+        from nebu.cli.main import cli
+        # Use Current Working Directory (CWD)
+        args = ['publish', 'test-env', '.', '-m', message,
+                '--username', 'someusername', '--password', 'somepassword']
+        result = invoker(cli, args)
+
+        # Check the results
+        if result.exception:
+            raise result.exception
+        assert result.exit_code == 0
+        expected_output = (
+            'Great work!!! =D\n'
+        )
+        # FIXME Ignoring temporary formatting of output, just check for
+        #       the last line so we know we got to the correct place.
+        # assert result.output == expected_output
+        assert expected_output in result.output
+
+        # Check the sent contents
+        request_data = resp_callback.captured_request._request.body
+        # Discover the multipart/form-data boundry
+        boundary = request_data.split(b'\r\n')[0][2:]
+        form = parse_multipart(io.BytesIO(request_data),
+                               {'boundary': boundary})
+        assert form['publisher'][0] == publisher.encode('utf8')
+        assert form['message'][0] == message.encode('utf8')
+        # Check the zipfile for contents
+        with zipfile.ZipFile(io.BytesIO(form['file'][0])) as zb:
+            actual_published = set(zb.namelist())
+
+        # There is no .sha1sum file in any of the directories within
+        # data/collection folder, so it should treat all files as new and
+        # publish them all.
+        expected_published = set((
+            'col11405/collection.xml',
+            'col11405/m37151/index.cnxml',
+            'col11405/m37152/index.cnxml',
+            'col11405/m37154/index.cnxml',
+            'col11405/m37217/index.cnxml',
+            'col11405/m37386/index.cnxml',
+            'col11405/m40643/index.cnxml',
+            'col11405/m40645/index.cnxml',
+            'col11405/m40646/index.cnxml',
+            'col11405/m42302/index.cnxml',
+            'col11405/m42303/index.cnxml',
+            'col11405/m42304/index.cnxml'
+        ))
+        assert actual_published == expected_published
