@@ -153,10 +153,10 @@ class TestPublishCmd:
         mock_successful_ping('/auth-ping', requests_mock)
         mock_successful_ping('/publish-ping', requests_mock)
 
-        id = 'collection_resources'
+        dir_name = 'collection_resources'
         publisher = 'CollegeStax'
         message = 'mEssAgE'
-        monkeypatch.chdir(str(datadir / id))
+        monkeypatch.chdir(str(datadir / dir_name))
         monkeypatch.setenv('XXX_PUBLISHER', publisher)
 
         # Mock the publishing request
@@ -199,16 +199,19 @@ class TestPublishCmd:
         with zipfile.ZipFile(io.BytesIO(form['file'][0])) as zb:
             included_files = set(zb.namelist())
         expected_files = set((
-            'col11405/LEaRN.png',
             'col11405/collection.xml',
             'col11405/m37154/LEaRN.png',
             'col11405/m37154/index.cnxml',
-            'col11405/m37217/index.cnxml',
-            'col11405/m37386/index.cnxml',
-            'col11405/m40645/index.cnxml',
-            'col11405/m40646/index.cnxml',
-            'col11405/m42303/index.cnxml',
-            'col11405/m42304/index.cnxml'
+            # NOTE: The following files are commented out to create the
+            # expectation that we only publish content that has changed.
+            # See test_publish_only_what_changed for more info.
+            # 'col11405/LEaRN.png',
+            # 'col11405/m37217/index.cnxml',
+            # 'col11405/m37386/index.cnxml',
+            # 'col11405/m40645/index.cnxml',
+            # 'col11405/m40646/index.cnxml',
+            # 'col11405/m42303/index.cnxml',
+            # 'col11405/m42304/index.cnxml',
         ))
         assert included_files == expected_files
 
@@ -541,11 +544,6 @@ class TestPublishCmd:
         assert expected_output in result.output
 
     def test_publish_only_what_changed(self, datadir, monkeypatch, requests_mock, invoker):
-        import os
-        from pathlib import Path
-        from nebu.cli._common import calculate_sha1
-        from nebu.cli.get import gen_resources_sha1_cache
-
         mock_successful_ping('/auth-ping', requests_mock)
         mock_successful_ping('/publish-ping', requests_mock)
 
@@ -594,37 +592,27 @@ class TestPublishCmd:
         # Check the zipfile for contents
         with zipfile.ZipFile(io.BytesIO(form['file'][0])) as zb:
             included_files = set(zb.namelist())
-        resources = set((
-            'LEaRN.png',
-            'collection.xml',
-            # this one won't be in the sha1 cache file
+        expected_files = set((
+            # Although these commented out files do exist in the directory,
+            # they will not be published because their cached sha1 and
+            # actual/calculated sha1 are equal, meaning there are no changes.
+            # 'col11405/LEaRN.png',
+            # 'col11405/m37217/index.cnxml',
+            # 'col11405/m37386/index.cnxml',
+            # 'col11405/m40645/index.cnxml',
+            # 'col11405/m40646/index.cnxml',
+            # 'col11405/m42303/index.cnxml',
+            # 'col11405/m42304/index.cnxml',
+
+            # This one won't be in the cache (.sha1sum) file
             # to pretend that it's a new image:
-            # 'm37154/LEaRN.png',
-            'm37154/index.cnxml',
-            'm37217/index.cnxml',
-            'm37386/index.cnxml',
-            'm40645/index.cnxml',
-            'm40646/index.cnxml',
-            'm42303/index.cnxml',
-            # this one will have a different sha1 in the cache file
+            'col11405/m37154/LEaRN.png',
+            # This one will have a different sha1 in the cache file
             # to pretend that it was modified:
-            'm42304/index.cnxml',
+            'col11405/m37154/index.cnxml',
+            # Since modules were modified, also assume the collection
+            # was modified:
+            'col11405/collection.xml',
         ))
 
-        def append_resource_cache_to_dot_file(resource, full_path):
-            folder = os.path.dirname(str(full_path))
-            sha1 = calculate_sha1(full_path)
-            fname = full_path.name
-
-            with (Path(folder) / '.sha1sum').open('a') as df:
-                df.write('{} {}\n'.format(sha1, fname))
-
-
-        for res in resources:
-            full_path = datadir / contents_folder / res
-            append_resource_cache_to_dot_file(res, full_path)
-
-        # change the sha1 for the following cnxml to pretend that it changed.
-        # for resource in resources:
-        #     if resource['filename'] == 'col11405/m42304/index.cnxml':
-        #         resource['id'] = 'SomeDifferentSha1'
+        assert included_files == expected_files
