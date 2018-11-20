@@ -82,18 +82,20 @@ def filter_what_changed(contents):
         if cached_sha1 is None or resource.sha1 != cached_sha1:
             new_col_resources.append(resource)
 
-    new_coll = None
+    coll_changed = False
+    new_coll = collection._replace(resources=tuple(new_col_resources))
     if len(new_col_resources) > 0:
         new_coll = collection._replace(resources=tuple(new_col_resources))
         changed.insert(0, new_coll)  # because `_publish` will expect this
+        coll_changed = True
 
     # Also, if any modules (or resources) changed, assume collection changed.
     cached_coll_sha1 = coll_sha1s_dict.get('collection.xml')
     if len(changed) > 0 or coll_sha1s_dict.get('collection.xml') is None or \
        cached_coll_sha1 != calculate_sha1(collection.file):
 
-        new_coll = collection._replace(resources=tuple(new_col_resources))
-        changed.insert(0, new_coll)
+        if not coll_changed:  # coll already in changed.
+            changed.insert(0, new_coll)
         return changed
     else:  # No changes
         return []
