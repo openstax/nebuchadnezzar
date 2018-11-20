@@ -746,3 +746,43 @@ class TestPublishCmd:
         ))
 
         assert actual_published == expected_published
+
+    def test_nothing_changed(self, datadir, monkeypatch,
+                                                 requests_mock, invoker):
+        mock_successful_ping('/auth-ping', requests_mock)
+        mock_successful_ping('/publish-ping', requests_mock)
+
+        contents_folder = 'collection_no_changes'
+        publisher = 'CollegeStax'
+        message = 'mEssAgE'
+        monkeypatch.chdir(str(datadir / contents_folder))
+        monkeypatch.setenv('XXX_PUBLISHER', publisher)
+
+        # Mock the publishing request
+        url = 'https://cnx.org/api/publish-litezip'
+        resp_callback = ResponseCallback(COLLECTION_PUBLISH_PRESS_RESP_DATA)
+        requests_mock.register_uri(
+            'POST',
+            url,
+            status_code=200,
+            text=resp_callback,
+        )
+
+        from nebu.cli.main import cli
+        # Use Current Working Directory (CWD)
+        args = ['publish', 'test-env', '.', '-m', message,
+                '--username', 'someusername', '--password', 'somepassword']
+        result = invoker(cli, args)
+
+
+        # Check the results
+        if result.exception and not isinstance(result.exception, SystemExit):
+            raise result.exception
+        assert result.exit_code == 1
+        expected_output = (
+            'Nothing changed, nothing to publish.\n'
+        )
+        # FIXME Ignoring temporary formatting of output, just check for
+        #       the last line so we know we got to the correct place.
+        # assert result.output == expected_output
+        assert expected_output in result.output

@@ -69,7 +69,7 @@ def filter_what_changed(contents):
             changed.append(new_model)
 
     # Now check the Collection and the collection's resources.
-    # If any of the collection's resource changed, assume collection changed.
+    # If any of the collection's resources changed, assume collection changed.
     new_col_resources = []
     for resource in collection.resources:
         if '.sha1sum' == resource.filename:
@@ -80,7 +80,6 @@ def filter_what_changed(contents):
 
         # if resource is new or it has been modified
         if cached_sha1 is None or resource.sha1 != cached_sha1:
-            # then the collection has changed.
             new_col_resources.append(resource)
 
     new_coll = None
@@ -136,6 +135,11 @@ def gen_zip_file(base_file_path, struct):
 
 
 def _publish(base_url, struct, message, username, password):
+    if len(struct) == 0:
+        logger.debug('Temporary raw output...')
+        logger.error('Nothing changed, nothing to publish.\n')
+        return False
+
     auth = HTTPBasicAuth(username, password)
 
     """Check for good credentials"""
