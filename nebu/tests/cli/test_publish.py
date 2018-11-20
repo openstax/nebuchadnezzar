@@ -200,12 +200,12 @@ class TestPublishCmd:
             included_files = set(zb.namelist())
         expected_files = set((
             'col11405/collection.xml',
+            'col11405/LEaRN.png',
             'col11405/m37154/LEaRN.png',
             'col11405/m37154/index.cnxml',
             # NOTE: The following files are commented out to create the
             # expectation that we only publish content that has changed.
             # See test_publish_only_what_changed for more info.
-            # 'col11405/LEaRN.png',
             # 'col11405/m37217/index.cnxml',
             # 'col11405/m37386/index.cnxml',
             # 'col11405/m40645/index.cnxml',
@@ -597,7 +597,6 @@ class TestPublishCmd:
             # Although these commented out files do exist in the directory,
             # they will not be published because their cached sha1 and
             # actual/calculated sha1 are equal, meaning there are no changes.
-            # 'col11405/LEaRN.png',
             # 'col11405/m37217/index.cnxml',
             # 'col11405/m37386/index.cnxml',
             # 'col11405/m40645/index.cnxml',
@@ -611,6 +610,9 @@ class TestPublishCmd:
             # This one will have a different sha1 in the cache file
             # to pretend that it was modified:
             'col11405/m37154/index.cnxml',
+            # Also this one will have a different sha1 in the cache file
+            # to pretend that it was modified:
+            'col11405/LEaRN.png',
             # Since modules were modified, also assume the collection
             # was modified:
             'col11405/collection.xml',
@@ -748,7 +750,7 @@ class TestPublishCmd:
         assert actual_published == expected_published
 
     def test_nothing_changed(self, datadir, monkeypatch,
-                                                 requests_mock, invoker):
+                             requests_mock, invoker):
         mock_successful_ping('/auth-ping', requests_mock)
         mock_successful_ping('/publish-ping', requests_mock)
 
@@ -773,7 +775,6 @@ class TestPublishCmd:
         args = ['publish', 'test-env', '.', '-m', message,
                 '--username', 'someusername', '--password', 'somepassword']
         result = invoker(cli, args)
-
 
         # Check the results
         if result.exception and not isinstance(result.exception, SystemExit):

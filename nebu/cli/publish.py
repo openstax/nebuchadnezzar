@@ -51,7 +51,7 @@ def filter_what_changed(contents):
     for model, sha1s_dict in contents:
         new_mod_resources = []
         for resource in model.resources:
-            if '.sha1sum' == resource.filename:
+            if '.sha1sum' in resource.filename:
                 # ignore cache files
                 continue
 
@@ -72,7 +72,7 @@ def filter_what_changed(contents):
     # If any of the collection's resources changed, assume collection changed.
     new_col_resources = []
     for resource in collection.resources:
-        if '.sha1sum' == resource.filename:
+        if '.sha1sum' in resource.filename:
             # ignore cache files
             continue
 
@@ -92,11 +92,8 @@ def filter_what_changed(contents):
     if len(changed) > 0 or coll_sha1s_dict.get('collection.xml') is None or \
        cached_coll_sha1 != calculate_sha1(collection.file):
 
-        if new_coll is None:
-            new_coll = collection._replace(resources=tuple(new_col_resources))
-            changed.insert(0, new_coll)
-        else:
-            changed.insert(0, collection)
+        new_coll = collection._replace(resources=tuple(new_col_resources))
+        changed.insert(0, new_coll)
         return changed
     else:  # No changes
         return []
