@@ -57,7 +57,6 @@ def filter_what_changed(contents):
 
             cached_sha1 = sha1s_dict.get(resource.filename.strip())
 
-            # if resource is new or it has been modified
             if cached_sha1 is None or resource.sha1 != cached_sha1:
                 new_mod_resources.append(resource)
 
@@ -68,8 +67,7 @@ def filter_what_changed(contents):
             new_model = model._replace(resources=tuple(new_mod_resources))
             changed.append(new_model)
 
-    # Now check the Collection and the collection's resources.
-    # If any of the collection's resources changed, assume collection changed.
+    # Now check the Collection and the collection's resources
     new_col_resources = []
     for resource in collection.resources:
         if '.sha1sum' in resource.filename:
@@ -78,22 +76,23 @@ def filter_what_changed(contents):
 
         cached_sha1 = coll_sha1s_dict.get(resource.filename.strip())
 
-        # if resource is new or it has been modified
+        # If any of the collection's resources changed, assume collection changed
         if cached_sha1 is None or resource.sha1 != cached_sha1:
             new_col_resources.append(resource)
 
-    new_coll = None
+    coll_changed = False
+    new_coll = collection._replace(resources=tuple(new_col_resources))
     if len(new_col_resources) > 0:
-        new_coll = collection._replace(resources=tuple(new_col_resources))
         changed.insert(0, new_coll)  # because `_publish` will expect this
+        coll_changed = True
 
-    # Also, if any modules (or resources) changed, assume collection changed.
+    # Also, if any modules changed, assume collection changed
     cached_coll_sha1 = coll_sha1s_dict.get('collection.xml')
     if len(changed) > 0 or coll_sha1s_dict.get('collection.xml') is None or \
        cached_coll_sha1 != calculate_sha1(collection.file):
 
-        new_coll = collection._replace(resources=tuple(new_col_resources))
-        changed.insert(0, new_coll)
+        if not coll_changed:  # collection not already in changed
+            changed.insert(0, new_coll)
         return changed
     else:  # No changes
         return []
