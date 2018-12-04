@@ -26,6 +26,12 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree):
 
     base_url = build_archive_url(ctx, env)
 
+    version = None
+    if col_version.count('.') > 1:
+        full_version = col_version.split('.')
+        col_version = '.'.join(full_version[:2])
+        version = '.'.join(full_version[1:])
+
     col_hash = '{}/{}'.format(col_id, col_version)
     # Fetch metadata
     url = '{}/content/{}'.format(base_url, col_hash)
@@ -38,6 +44,11 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree):
         resp = requests.get(url)
         col_metadata = resp.json()
     uuid = col_metadata['id']
+    if version and version != col_metadata['version']:
+        url = '{}/contents/{}@{}'.format(base_url, uuid, version) + \
+              '?as_collated=False'
+        resp = requests.get(url)
+        col_metadata = resp.json()
     version = col_metadata['version']
 
     # Generate full output dir as soon as we have the version
