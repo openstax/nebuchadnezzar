@@ -20,13 +20,16 @@ from .validate import is_valid
 def parse_book_tree(bookdir):
     """Converts filesystem booktree back to a struct"""
     struct = []
+    ex = [lambda filepath: '.sha1sum' in filepath.name]
     for dirname, subdirs, filenames in os.walk(str(bookdir)):
         if 'collection.xml' in filenames:
             path = Path(dirname)
-            struct.append((parse_collection(path), get_sha1s_dict(path)))
+            sha1s = get_sha1s_dict(path)
+            struct.append((parse_collection(path, excludes=ex), sha1s))
         elif 'index.cnxml' in filenames:
             path = Path(dirname)
-            struct.append((parse_module(path), get_sha1s_dict(path)))
+            sha1s = get_sha1s_dict(path)
+            struct.append((parse_module(path, excludes=ex), sha1s))
 
     return struct
 
@@ -49,10 +52,6 @@ def filter_what_changed(contents):
     for model, sha1s_dict in contents:
         new_mod_resources = []
         for resource in model.resources:
-            if '.sha1sum' in resource.filename:
-                # ignore cache files
-                continue
-
             cached_sha1 = sha1s_dict.get(resource.filename.strip())
 
             if cached_sha1 is None or resource.sha1 != cached_sha1:
@@ -68,10 +67,6 @@ def filter_what_changed(contents):
     """Now check the Collection and the Collection's resources"""
     new_col_resources = []
     for resource in collection.resources:
-        if '.sha1sum' in resource.filename:
-            # ignore cache files
-            continue
-
         cached_sha1 = coll_sha1s_dict.get(resource.filename.strip())
 
         if cached_sha1 is None or resource.sha1 != cached_sha1:
@@ -87,8 +82,7 @@ def filter_what_changed(contents):
     cached_coll_sha1 = coll_sha1s_dict.get('collection.xml')
     if len(changed) > 0 or coll_sha1s_dict.get('collection.xml') is None or \
        cached_coll_sha1 != calculate_sha1(collection.file):
-
-        if not coll_changed:
+        if not coll_changed:  # coll already in changed.
             changed.insert(0, new_coll)
         return changed
     else:  # No changes at all
