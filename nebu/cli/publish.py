@@ -219,7 +219,7 @@ def publish(ctx, env, content_dir, message, username, password,
     struct = parse_book_tree(content_dir)
 
     struct = filter_what_changed(struct)
-    logger.info('{} file(s) have been added or modified...'.format(len(struct)))
+    logger.info('{} file(s) have been added or modified.'.format(len(struct)))
 
     if not skip_validation and not is_valid(struct):
         logger.info("We've got problems... :(")
