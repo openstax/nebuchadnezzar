@@ -8,7 +8,10 @@ from pathlib import Path
 
 from ..logger import logger
 from ._common import common_params, confirm, build_archive_url
-from .exceptions import *  # noqa: F403
+from .exceptions import (MissingContent,
+                         ExistingOutputDir,
+                         OldContent,
+                         )
 
 
 @click.command()
@@ -44,6 +47,10 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree):
         resp = requests.get(url)
         col_metadata = resp.json()
     uuid = col_metadata['id']
+    # metadata fetch used legacy IDs, so will only have
+    # the latest minor version - if "version" is set, the
+    # user requested an explicit minor (3 dot version: 1.X.Y)
+    # refetch metadata, using uuid and explicit version
     if version and version != col_metadata['version']:
         url = '{}/contents/{}@{}'.format(base_url, uuid, version) + \
               '?as_collated=False'
