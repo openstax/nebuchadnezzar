@@ -191,7 +191,7 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
         filepath.write_bytes(etree.tostring(etree.XML(file_resp.text),
                                             encoding='utf-8'))
         if get_resources:
-            for res in resources:
+            for res in resources:  # Dict keyed by resource filename
                 if res != filename:
                     filepath = write_dir / res
                     url = '{}/resources/{}'.format(base_url,
@@ -201,7 +201,6 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
 
         if pbar is not None:
             pbar.update(1)
-        # TODO Future - fetch all resources, if requested
 
     if 'contents' in node:  # Top-level or subcollection - recurse
         lvl += 1
