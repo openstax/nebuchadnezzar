@@ -1,5 +1,3 @@
-import os
-
 import click
 import requests
 
@@ -29,7 +27,7 @@ from .exceptions import (MissingContent,
 def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
     """download and expand the completezip to the current working directory"""
 
-    # Set book-tree
+    # Set book-tree default from config
     if book_tree is None:
         book_tree = ctx.obj['settings'].get('default_format') == 'tree'
 
@@ -81,7 +79,11 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
 
     # ... and check if it's already been downloaded
     if output_dir.exists():
-        raise ExistingOutputDir(output_dir)
+        try:
+            raise ExistingOutputDir(output_dir.relative_to(Path.cwd()))
+        except ValueError:
+            # Raised ONLY when output_dir is not a child of cwd
+            raise ExistingOutputDir(output_dir)
 
     # Fetch extras (includes head and downloadable file info)
     url = '{}/extras/{}@{}'.format(base_url, uuid, version)
@@ -106,7 +108,7 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
 
     # Write tree
     tree = col_metadata['tree']
-    os.mkdir(str(output_dir))
+    output_dir.mkdir()
 
     num_pages = _count_leaves(tree) + 1  # Num. of xml files to fetch
     try:
@@ -114,11 +116,13 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
     except ValueError:
         # Raised ONLY when output_dir is not a child of cwd
         label = 'Getting {}'.format(output_dir)
+
     with click.progressbar(length=num_pages,
                            label=label,
                            width=0,
                            show_pos=True) as pbar:
-        _write_node(tree, base_url, output_dir, book_tree, get_resources, pbar)
+        _write_node(ctx, tree, base_url, output_dir, book_tree, get_resources,
+                    pbar)
 
 
 def _count_leaves(node):
@@ -150,30 +154,24 @@ def gen_resources_sha1_cache(write_dir, resources):
             s.write('{}  {}\n'.format(resource['id'], resource['filename']))
 
 
-def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
+def _write_node(ctx, node, base_url, out_dir,
+                book_tree=False, get_resources=False,
                 pbar=None, depth=None, pos={0: 0}, lvl=0):
     """Recursively write out contents of a book
        Arguments are:
-        root of the json tree, archive url to fetch from, existing directory
-       to write out to, format to write (book tree or flat) as well as a
-       click progress bar, if desired. Depth is height of tree, used to reset
-       the lowest level counter (pages) per chapter. All other levels (Chapter,
-       unit) count up for entire book. Remaining args are used for recursion"""
+       context object, root of the json tree, archive url to fetch from,
+       existing directory to write out to, format to write (book tree or flat)
+       as well as a click progress bar, if desired. Depth is height of tree,
+       used to reset the lowest level counter (pages) per chapter. All other
+       levels (Chapter, unit) count up for entire book. last two are counters
+       for numbering, as well."""
+
     if depth is None:
         depth = _tree_depth(node)
         pos = {0: 0}
         lvl = 0
-    if book_tree:
-        #  HACK Prepending zero-filled numbers to folders to fix the sort order
-        if lvl > 0:
-            dirname = '{:02d} {}'.format(pos[lvl], _safe_name(node['title']))
-        else:
-            dirname = _safe_name(node['title'])  # book name gets no number
 
-        out_dir = out_dir / dirname
-        os.mkdir(str(out_dir))
-
-    write_dir = out_dir  # Allows nesting only for book_tree case
+    write_dir = out_dir
 
     # Fetch and store the core file for each node
     resp = requests.get('{}/contents/{}'.format(base_url, node['id']))
@@ -192,17 +190,20 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
         filename = filename_by_type[metadata['mediaType']]
         url = '{}/resources/{}'.format(base_url, resources[filename]['id'])
         file_resp = requests.get(url)
-        if not(book_tree) and filename == 'index.cnxml':
-            write_dir = write_dir / metadata['legacy_id']
-            os.mkdir(str(write_dir))
+        xml = etree.XML(file_resp.text)
+        if book_tree:
+            out_dir = gen_tree_path(ctx, out_dir, node, xml, lvl, pos)
+            write_dir = out_dir
+
+        elif filename == 'index.cnxml':
+            write_dir = out_dir / metadata['legacy_id']
+
+        if not write_dir.exists():
+            write_dir.mkdir()
         filepath = write_dir / filename
 
-        # Cache/store sha1-s for resources in a 'dot' file
-        gen_resources_sha1_cache(write_dir, resources)
-
         # core files are XML - this parse/serialize removes numeric entities
-        filepath.write_bytes(etree.tostring(etree.XML(file_resp.text),
-                                            encoding='utf-8'))
+        filepath.write_bytes(etree.tostring(xml, encoding='utf-8'))
 
         if get_resources:
             for res in resources:  # Dict keyed by resource filename
@@ -214,8 +215,16 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
                     file_resp = requests.get(url)
                     filepath.write_bytes(file_resp.content)
 
+        # Cache/store sha1-s for resources in a 'dot' file
+        gen_resources_sha1_cache(write_dir, resources)
+
         if pbar is not None:
             pbar.update(1)
+
+    elif book_tree:  # No metadata to fetch, is a subcollection
+        # Need to create subcol dir
+        out_dir = gen_tree_path(ctx, out_dir, node, None, lvl, pos)
+        out_dir.mkdir()
 
     if 'contents' in node:  # Top-level or subcollection - recurse
         lvl += 1
@@ -224,11 +233,37 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
         if lvl == depth:  # Reset counter for bottom-most level: pages
             pos[lvl] = 0
         for child in node['contents']:
-            #  HACK - the silly don't number Preface/Introduction logic
-            if ((lvl == 1 and pos[1] == 0 and 'Preface' in child['title']) or
-                    (pos[lvl] == 0 and child['title'] == 'Introduction')):
-                pos[lvl] = 0
-            else:
-                pos[lvl] += 1
-            _write_node(child, base_url, out_dir, book_tree, get_resources,
+            pos[lvl] += 1
+            _write_node(ctx, child, base_url, out_dir,
+                        book_tree, get_resources,
                         pbar, depth, pos, lvl)
+
+
+def skip_numbering(ctx, node, xml, lvl, pos):
+    if xml is not None:
+        skip_classes = ctx.obj['settings'].get('skip_number_classes', [])
+        if not isinstance(skip_classes, list):
+            skip_classes = [skip_classes]
+        for skip_class in skip_classes:
+            # Test top node for a class that means skip numbering
+            if xml.xpath('/*[contains(@class, "{}")]'.format(skip_class)):
+                return True
+
+    # Fallback don't number Preface/Introduction logic, to wit:
+    # If at top of book and in first position, and "Preface" in the name,
+    # or if at first position at any level, and name is "Introduction",
+    # skip numbering for that page
+    return ((lvl == 1 and pos[1] == 1 and 'Preface' in node['title']) or
+            (pos[lvl] == 1 and node['title'] == 'Introduction'))
+
+
+def gen_tree_path(ctx, out_dir, node, xml, lvl, pos):
+    if skip_numbering(ctx, node, xml, lvl, pos):
+        pos[lvl] = 0
+    #  Prepending zero-filled numbers to folders to fix the sort order
+    if lvl > 0:
+        dirname = '{:02d} {}'.format(pos[lvl], _safe_name(node['title']))
+    else:
+        dirname = _safe_name(node['title'])  # book name gets no number
+
+    return out_dir / dirname

@@ -525,6 +525,30 @@ class TestGetCmd:
 
         assert 'directory already exists:' in result.output
 
+    def test_with_outside_cwd_existing_output_dir(self, tmpcwd, invoker,
+                                                  monkeypatch, requests_mock,
+                                                  datadir):
+        col_id = 'col00000'
+        col_version = '2.1'
+        base_url = 'https://archive.cnx.org'
+        url = '{}/content/{}/{}'.format(base_url, col_id, col_version)
+
+        # Register the metadata url
+        register_data_file(requests_mock, datadir, 'contents.json', url)
+
+        expected_output_dir = '{}_1.{}'.format(col_id, col_version)
+        outdir = tmpcwd / expected_output_dir
+        outdir.mkdir()
+        monkeypatch.chdir('/var')
+
+        from nebu.cli.main import cli
+        args = ['get', 'test-env', '-d', str(outdir), col_id, col_version]
+        result = invoker(cli, args)
+
+        assert result.exit_code == 3
+
+        assert 'directory already exists:' in result.output
+
     def test_failed_request_omitting_version(self, invoker):
         col_id = 'col00000'
 

@@ -19,6 +19,30 @@ url = http://localhost:6543
 url = https://dev.cnx.org
 """
 
+TESTING_CONFIG_SETTING = """\
+[settings]
+
+default_format = tree
+
+[environ-local]
+url = http://localhost:6543
+
+[environ-dev]
+url = https://dev.cnx.org
+"""
+
+TESTING_CONFIG_LIST = """\
+[settings]
+
+skip_number_classes = introduction, preface
+
+[environ-local]
+url = http://localhost:6543
+
+[environ-dev]
+url = https://dev.cnx.org
+"""
+
 
 class TestDiscoverSettings:
 
@@ -112,6 +136,47 @@ class TestDiscoverSettings:
 
         with loc.open('r') as fb:
             assert fb.read() == INITIAL_DEFAULT_CONFIG
+
+
+class TestSettingsParsing:
+
+    def test_format_config(self, tmpdir, monkeypatch):
+        loc = Path(str(tmpdir / 'config.ini'))
+        monkeypatch.setattr('os.environ', {'NEB_CONFIG': str(loc)})
+
+        with loc.open('w') as fb:
+            fb.write(TESTING_CONFIG_SETTING)
+
+        settings = discover_settings()
+
+        expected_settings = {
+            '_config_file': loc,
+            'default_format': 'tree',
+            'environs': {
+                'dev': {'url': 'https://dev.cnx.org'},
+                'local': {'url': 'http://localhost:6543'},
+            },
+        }
+        assert settings == expected_settings
+
+    def test_list_config(self, tmpdir, monkeypatch):
+        loc = Path(str(tmpdir / 'config.ini'))
+        monkeypatch.setattr('os.environ', {'NEB_CONFIG': str(loc)})
+
+        with loc.open('w') as fb:
+            fb.write(TESTING_CONFIG_LIST)
+
+        settings = discover_settings()
+
+        expected_settings = {
+            '_config_file': loc,
+            'environs': {
+                'dev': {'url': 'https://dev.cnx.org'},
+                'local': {'url': 'http://localhost:6543'},
+            },
+            'skip_number_classes': ['introduction', 'preface'],
+        }
+        assert settings == expected_settings
 
 
 class TestPrepare:
