@@ -2,6 +2,8 @@
 Change Log
 ==========
 
+- Correct numbering on book tree using classes in config
+
 9.0.1
 -----
 
