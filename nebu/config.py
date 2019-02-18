@@ -9,7 +9,13 @@ CONFIG_SECTION_ENVIRON_PREFIX = 'environ-'
 INITIAL_DEFAULT_CONFIG = """\
 [settings]
 
-# default_format = tree|flat
+# If set, this has the same effect as `neb get -t` and `neb get -f`
+# respectively. If default is the opposite flag will override
+
+# default_book_format = tree|flat
+
+# This provides the classes used to supress numbering of first-pages
+# in chapters and books, such as 'introduction' or 'preface'
 
 # skip_number_classes = <class-1> <class-2> [...]
 

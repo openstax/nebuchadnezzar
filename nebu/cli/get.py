@@ -29,7 +29,7 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
 
     # Set book-tree default from config
     if book_tree is None:
-        book_tree = ctx.obj['settings'].get('default_format') == 'tree'
+        book_tree = ctx.obj['settings'].get('default_book_format') == 'tree'
 
     base_url = build_archive_url(ctx, env)
 
@@ -240,6 +240,14 @@ def _write_node(ctx, node, base_url, out_dir,
 
 
 def skip_numbering(ctx, node, xml, lvl, pos):
+    """Apply logic that matches baking and webview for page numbers
+
+    This code assumes the `skip_number_classes` is a space seperated
+    list of classnames that are optionally present on the root node of
+    the XML passed in, to indicate that they should not be numbered.
+
+    If no XML, or class not present, apply fallback HACK based on title.
+    """
     if xml is not None:
         if pos[lvl] == 1:  # classes only apply when page is first in chapter
             skip_classes = (
