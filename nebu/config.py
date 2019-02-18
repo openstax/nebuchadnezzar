@@ -11,7 +11,8 @@ INITIAL_DEFAULT_CONFIG = """\
 
 # default_format = tree|flat
 
-# skip_number_classes = <class-1>, <class-2> [, ...]
+# skip_number_classes = <class-1> <class-2> [...]
+
 # [environ-<short-name>]
 # url = <base-url-to-the-environment>
 
@@ -90,12 +91,7 @@ def discover_settings():
             short_name = section[len(CONFIG_SECTION_ENVIRON_PREFIX):]
             settings['environs'][short_name] = dict(config[section])
         elif section == 'settings':
-            for k, v in config[section].items():
-                if ',' in v:
-                    settings[k] = [i.strip() for i in v.split(',')
-                                   if i.strip()]
-                else:
-                    settings[k] = v
+            settings.update(config[section])
         else:
             # Ignore other sections
             pass   # pragma: no cover

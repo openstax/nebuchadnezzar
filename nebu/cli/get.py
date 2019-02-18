@@ -241,9 +241,7 @@ def _write_node(ctx, node, base_url, out_dir,
 
 def skip_numbering(ctx, node, xml, lvl, pos):
     if xml is not None:
-        skip_classes = ctx.obj['settings'].get('skip_number_classes', [])
-        if not isinstance(skip_classes, list):
-            skip_classes = [skip_classes]
+        skip_classes = ctx.obj['settings'].get('skip_number_classes', '').split()
         for skip_class in skip_classes:
             # Test top node for a class that means skip numbering
             if xml.xpath('/*[contains(@class, "{}")]'.format(skip_class)):

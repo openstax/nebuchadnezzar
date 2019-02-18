@@ -34,7 +34,7 @@ url = https://dev.cnx.org
 TESTING_CONFIG_LIST = """\
 [settings]
 
-skip_number_classes = introduction, preface
+skip_number_classes = introduction preface
 
 [environ-local]
 url = http://localhost:6543
@@ -159,7 +159,7 @@ class TestSettingsParsing:
         }
         assert settings == expected_settings
 
-    def test_list_config(self, tmpdir, monkeypatch):
+    def test_skip_config(self, tmpdir, monkeypatch):
         loc = Path(str(tmpdir / 'config.ini'))
         monkeypatch.setattr('os.environ', {'NEB_CONFIG': str(loc)})
 
@@ -174,7 +174,7 @@ class TestSettingsParsing:
                 'dev': {'url': 'https://dev.cnx.org'},
                 'local': {'url': 'http://localhost:6543'},
             },
-            'skip_number_classes': ['introduction', 'preface'],
+            'skip_number_classes': 'introduction preface',
         }
         assert settings == expected_settings
 
