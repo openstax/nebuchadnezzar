@@ -5,5 +5,12 @@ def test_for_list(monkeypatch, invoker):
     result = invoker(cli, args)
     assert result.exit_code == 0
 
-    expected_output = 'test-env\t https://cnx.org\n'
+    expected_output = (
+        'Name\tURL\n'
+        '----\t---\n'
+        'test-env\thttps://cnx.org\n'
+        '------\n'
+        'Unnumbered classes: introduction\n'
+    )
+
     assert result.output == expected_output

@@ -9,7 +9,7 @@ from ..config import prepare
 
 from .atom import config_atom
 from .get import get
-from .environment import list_environments
+from .environment import list_settings
 from .publish import publish
 from .validate import validate
 
@@ -95,6 +95,6 @@ def cli(ctx):
 
 cli.add_command(config_atom)
 cli.add_command(get)
-cli.add_command(list_environments)
+cli.add_command(list_settings)
 cli.add_command(publish)
 cli.add_command(validate)
