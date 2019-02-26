@@ -11,22 +11,6 @@ def get_files(directory, filename):
 
 
 @pytest.fixture
-def clear_files(request):
-    def _clear_files(directory, filename):
-        def cleanup():
-            for f in get_files(directory, filename):
-                os.unlink(f)
-
-        # make sure files are removed before tests
-        cleanup()
-
-        # make sure files are removed after tests
-        request.addfinalizer(cleanup)
-
-    return _clear_files
-
-
-@pytest.fixture
 def cnxml_to_full_html(request):
     patcher = mock.patch('nebu.cli.cnxml_to_html.cnxml_to_full_html')
     mock_function = patcher.start()
