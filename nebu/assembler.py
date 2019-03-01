@@ -12,7 +12,7 @@ from .logger import logger
 
 
 __all__ = (
-    'assemble',
+    'assembler',
 )
 
 Module = namedtuple('Module', 'id, path')
@@ -27,7 +27,7 @@ DATA_WHEN_MODULE_NOT_FOUND = "<body style='color: red;'>Module with id {} "\
                              "goes here.</body>"
 
 
-def assemble(source_dir='.'):
+def assembler(source_dir='.'):
     """Assembles module HTML files into one HTML file using a collxml file
     to define their order.
     """

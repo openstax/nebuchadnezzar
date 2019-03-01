@@ -13,6 +13,7 @@ from .get import get
 from .environment import list_environments
 from .publish import publish
 from .validate import validate
+from .assemble import assemble
 
 
 __all__ = ('cli',)
@@ -100,3 +101,4 @@ cli.add_command(get)
 cli.add_command(list_environments)
 cli.add_command(publish)
 cli.add_command(validate)
+cli.add_command(assemble)

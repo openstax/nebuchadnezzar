@@ -3,7 +3,7 @@ from pathlib import Path
 
 from lxml import etree
 
-from nebu.assembler import assemble
+from nebu.assembler import assembler
 
 TITLES_XPATH = '//*[@data-type="document-title"]/text()'
 
@@ -15,7 +15,7 @@ class TestAssembler(object):
         """
         source_dir = datadir / 'col11562_1.23_complete'
 
-        assemble(source_dir)
+        assembler(source_dir)
 
         """Parse the titles in source modules (expected)"""
         mod_fname = '/index.cnxml.html'
@@ -42,7 +42,7 @@ class TestAssembler(object):
         the single HTML file
         """
         source_dir = datadir / 'col11562_1.23_complete_book_tree'
-        assemble(source_dir)
+        assembler(source_dir)
 
         book_name = 'Introductory Statistics'
         out_path = source_dir / book_name / 'collection.xhtml'
@@ -71,7 +71,7 @@ class TestAssembler(object):
         """
         source_dir = datadir / 'col11562_1.23_complete'
 
-        assemble(source_dir)
+        assembler(source_dir)
 
         def parse_imgs_uri(path):
             from cnxepub.models import _parse_references
