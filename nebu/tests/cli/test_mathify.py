@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -54,7 +55,7 @@ class TestMathifyCmd:
 
         from nebu.cli.main import cli
         args = ['mathify', str(datadir)]
-        with mock.patch('nebu.cli.main.assemble') as assemble:
+        with mock.patch('nebu.cli.mathify.assemble') as assemble:
             result = invoker(cli, args)
             assert not assemble.called
 
@@ -69,22 +70,43 @@ class TestMathifyCmd:
         assert (datadir / OUTPUT_FILE).is_file()
 
     def test_wo_collection_xhtml(self, datadir, invoker, mathify_cleanup,
-                                 mathify_docker_client):
+                                 mathify_docker_client, tmp_path):
         docker_client = mathify_docker_client
         mathify_cleanup()
 
+        # Note, the source option's value isn't really important, because
+        # the assemble command is mocked.
+        source_dir = (tmp_path / 'source')
+        source_dir.mkdir()
+        workspace = datadir / 'does-not-exist'
+
         from nebu.cli.main import cli
-        args = ['mathify', str(datadir)]
-        with mock.patch('nebu.cli.main.assemble') as assemble:
+        args = [
+            'mathify',
+            '--source', str(source_dir),
+            str(workspace)]
+        with mock.patch('nebu.cli.mathify.assemble') as assemble:
             assemble.side_effect = lambda *args, **kwargs: \
                 create_collection_xhtml(datadir)
             result = invoker(cli, args)
             assert assemble.called
             args, kwargs = assemble.call_args
-            assert kwargs['collection_path'] == str(datadir)
+            assert kwargs['input_dir'] == Path(str(source_dir))
+            assert kwargs['output_dir'] == workspace
 
-        assert result.exit_code == 0
+        assert result.exit_code == 1
         assert docker_client.containers.run.called
+
+    def test_wo_collection_xhtml_or_source(self, datadir, invoker,
+                                           mathify_cleanup):
+        mathify_cleanup()
+
+        from nebu.cli.main import cli
+        args = ['mathify', str(datadir)]
+        result = invoker(cli, args)
+
+        assert result.exit_code == 1
+        assert 'Aborted!' in result.output
 
     def test_image_not_found(self, datadir, invoker, mathify_cleanup,
                              mathify_docker_client):

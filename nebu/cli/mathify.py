@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 import re
 
@@ -7,6 +6,7 @@ import docker
 
 from ..logger import logger
 from ._common import common_params
+from .assemble import assemble
 
 
 IMAGE_TAG = 'openstax/mathify'
@@ -16,31 +16,32 @@ OUTPUT_FILE = 'collection.mathified.xhtml'
 MOUNT_POINT = '/out'
 
 
-def get_input_file_path(collection_path):
-    for root, dirs, files in os.walk(collection_path):
-        if INPUT_FILE in files:
-            return Path(root, INPUT_FILE)
-
-
 @click.command()
 @common_params
 @click.option('-f', '--format', default='svg',
               help='The format that math should transform to')
 @click.option('--build', is_flag=True,
               help='Force build the baked-pdf image even if the image exists')
-@click.argument('collection_path')
+@click.option('-i', '--source', type=click.Path(exists=True),
+              help=("Location of the collection's source (containing "
+                    "collection.xml)"))
+@click.argument('collection_path', type=click.Path())
 @click.pass_context
-def mathify(ctx, collection_path, build, format='svg'):
+def mathify(ctx, collection_path, build, source, format):
     """Transform math in COLLECTION_PATH to svg or html"""
     colpath = Path(collection_path)
-    input_file = get_input_file_path(collection_path)
-    if not input_file:
+    input_file = colpath / INPUT_FILE
+
+    if not input_file.exists():
+        if not source:
+            logger.error('Could not find input source, try specifying an '
+                         'input source using the `--source` option')
+            ctx.abort()
         # invoke neb assemble if input file is not found
-        from .main import assemble  # TODO import from .assemble when ready
         logger.info('Input file {} not found, running neb assemble...'.format(
             INPUT_FILE))
-        ctx.invoke(assemble, collection_path=collection_path)
-        input_file = get_input_file_path(collection_path)
+        ctx.invoke(assemble, input_dir=Path(source), output_dir=colpath)
+
     output_file = input_file.parent / OUTPUT_FILE
     # If input_file is
     # ./col12345_1.23.45/Introductory Statistics/collection.xhtml, then
