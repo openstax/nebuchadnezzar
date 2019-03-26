@@ -1,4 +1,3 @@
-import shutil
 from pathlib import Path
 
 import click
@@ -25,6 +24,8 @@ def produce_collection_xhtml(binder, output_dir):
 def provide_supporting_files(input_dir, output_dir, binder):
     documents = {doc.id: doc for doc in flatten_to_documents(binder)}
     for id, filepath in scan_for_id_mapping(input_dir).items():
+        if (output_dir / id).exists():
+            (output_dir / id).unlink()
         (output_dir / id).symlink_to(
             relative_path(filepath.parent, output_dir)
         )
@@ -47,20 +48,23 @@ def assemble(ctx, input_dir, output_dir):
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
 
-    if output_dir.exists():
+    if (output_dir / 'collection.assembled.xhtml').exists():
         confirm_msg = (
             "This will remove '{}', continue?"
-            .format(str(output_dir))
+            .format(output_dir / 'collection.assembled.xhtml')
         )
         click.confirm(confirm_msg, abort=True, err=True)
-        shutil.rmtree(str(output_dir))
-    output_dir.mkdir()
+        (output_dir / 'collection.assembled.xhtml').unlink()
+    if not output_dir.exists():
+        output_dir.mkdir()
 
     collection_xml = input_dir / 'collection.xml'
     binder = Binder.from_collection_xml(collection_xml)
 
     # Write the collection.xml symlink to the output directory
     output_collection_xml = (output_dir / 'collection.xml')
+    if output_collection_xml.exists():
+        output_collection_xml.unlink()
     output_collection_xml.symlink_to(
         relative_path(collection_xml, output_dir)
     )

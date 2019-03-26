@@ -69,10 +69,24 @@ class TestAssembleCmd:
         expected_dir = (src_data / 'm46882').resolve()
         assert Path(str(m46882_dir.resolve())) == expected_dir
 
-    def test_output_dir_exists_proceed(self, tmp_path, src_data, result_data,
-                                       invoker):
+    def test_output_dir_exists(self, tmp_path, src_data, invoker):
         output_dir = tmp_path / 'build'
         output_dir.mkdir()
+
+        from nebu.cli.main import cli
+        args = [
+            'assemble',  # (target)
+            str(src_data), str(output_dir),
+        ]
+        result = invoker(cli, args)
+
+        # Verify the invocation output
+        assert result.exit_code == 0, result.output
+
+    def test_output_file_exists_proceed(self, tmp_path, src_data, invoker):
+        output_dir = tmp_path / 'build'
+        output_dir.mkdir()
+        (output_dir / 'collection.assembled.xhtml').touch()
 
         from nebu.cli.main import cli
         args = [
@@ -84,10 +98,10 @@ class TestAssembleCmd:
         # Verify the invocation output
         assert result.exit_code == 0, result.output
 
-    def test_output_dir_exists_abort(self, tmp_path, src_data, result_data,
-                                     invoker):
+    def test_output_file_exists_abort(self, tmp_path, src_data, invoker):
         output_dir = tmp_path / 'build'
         output_dir.mkdir()
+        (output_dir / 'collection.assembled.xhtml').touch()
 
         from nebu.cli.main import cli
         args = [
