@@ -13,8 +13,11 @@ from ..models.utils import scan_for_id_mapping
 from ..utils import relative_path
 
 
+ASSEMBLED_FILENAME = 'collection.assembled.xhtml'
+
+
 def produce_collection_xhtml(binder, output_dir):
-    collection_xhtml = output_dir / 'collection.assembled.xhtml'
+    collection_xhtml = output_dir / ASSEMBLED_FILENAME
     with collection_xhtml.open('wb') as fb:
         fb.write(bytes(SingleHTMLFormatter(binder)))
 
@@ -47,14 +50,15 @@ def assemble(ctx, input_dir, output_dir):
     """
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
+    collection_assembled_xhtml = (output_dir / ASSEMBLED_FILENAME)
 
-    if (output_dir / 'collection.assembled.xhtml').exists():
+    if collection_assembled_xhtml.exists():
         confirm_msg = (
             "This will remove '{}', continue?"
-            .format(output_dir / 'collection.assembled.xhtml')
+            .format(collection_assembled_xhtml)
         )
         click.confirm(confirm_msg, abort=True, err=True)
-        (output_dir / 'collection.assembled.xhtml').unlink()
+        collection_assembled_xhtml.unlink()
     if not output_dir.exists():
         output_dir.mkdir()
 
