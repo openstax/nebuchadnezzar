@@ -49,10 +49,15 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
     adapter = requests.adapters.HTTPAdapter(max_retries=5)
     session.mount('https://', adapter)
 
+    # Request the collection's metadata by requests the legacy url,
+    # which is redirected to the metadata url.
     resp = session.get(url)
     if resp.status_code >= 400:
         raise MissingContent(col_id, req_version)
     col_metadata = resp.json()
+
+    # If the response is a collated (aka baked) version of the book,
+    # request the non-collated (aka raw) version instead.
     if col_metadata['collated']:
         url = resp.url + '?as_collated=False'
         resp = session.get(url)
@@ -60,6 +65,7 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
             # This should never happen - indicates that only baked exists?
             raise MissingContent(col_id, req_version)
         col_metadata = resp.json()
+
     uuid = col_metadata['id']
     # metadata fetch used legacy IDs, so will only have
     # the latest minor version - if "version" is set, the
