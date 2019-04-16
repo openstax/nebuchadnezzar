@@ -48,7 +48,7 @@ Change Log
 9.0.1
 -----
 
-- Do not fetch auto-generated HTML file 
+- Do not fetch auto-generated HTML file
 
 9.0.0
 -----
