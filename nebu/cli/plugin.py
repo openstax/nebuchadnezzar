@@ -10,7 +10,6 @@ from litezip import (
     parse_collection,
     parse_module
 )
-# from litezip.main import COLLECTION_NSMAP
 
 from ._common import common_params
 
