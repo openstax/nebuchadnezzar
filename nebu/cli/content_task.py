@@ -1,17 +1,15 @@
 import os
-import sys
-import imp
 from pathlib import Path
 from importlib.util import spec_from_file_location, module_from_spec
 
 import click
-from lxml import etree
 from litezip import (
     parse_collection,
     parse_module
 )
 
 from ._common import common_params
+
 
 @click.command()
 @common_params
@@ -30,11 +28,11 @@ def content_task(ctx, task_file_path, content_dir, task_args):
         pass
 
     collection_action = (task_module.with_collection
-        if hasattr(task_module, 'with_collection')
-        else noop)
+                         if hasattr(task_module, 'with_collection')
+                         else noop)
     module_action = (task_module.with_module
-        if hasattr(task_module, 'with_module')
-        else noop)
+                     if hasattr(task_module, 'with_module')
+                     else noop)
 
     def to_str_dict(collection_or_module):
         return {
@@ -58,4 +56,3 @@ def content_task(ctx, task_file_path, content_dir, task_args):
             module = parse_module(path, excludes=ex)
             action_params = to_str_dict(module)
             module_action(**action_params)
-
