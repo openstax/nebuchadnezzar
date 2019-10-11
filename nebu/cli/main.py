@@ -13,6 +13,7 @@ from .get import get
 from .environment import list_environments
 from .publish import publish
 from .validate import validate
+from .plugin import plugin
 
 
 __all__ = ('cli',)
@@ -97,6 +98,7 @@ def cli(ctx):
 cli.add_command(assemble)
 cli.add_command(config_atom)
 cli.add_command(get)
+cli.add_command(plugin)
 cli.add_command(list_environments)
 cli.add_command(publish)
 cli.add_command(validate)
