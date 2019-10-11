@@ -51,8 +51,8 @@ def content_task(ctx, task_file_path, content_dir, task_args):
         if 'collection.xml' in filenames:
             collection = parse_collection(path, excludes=ex)
             action_params = to_str_dict(collection)
-            collection_action(**action_params)
+            collection_action(**action_params, args=task_args)
         elif 'index.cnxml' in filenames:
             module = parse_module(path, excludes=ex)
             action_params = to_str_dict(module)
-            module_action(**action_params)
+            module_action(**action_params, args=task_args)
