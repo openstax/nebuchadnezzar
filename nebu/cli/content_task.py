@@ -15,25 +15,25 @@ from ._common import common_params
 
 @click.command()
 @common_params
-@click.argument('plugin',
+@click.argument('task_file_path',
                 type=click.Path(exists=True, dir_okay=False))
 @click.argument('content_dir',
                 type=click.Path(exists=True, file_okay=False))
-@click.argument('plugin_args', nargs=-1)
+@click.argument('task_args', nargs=-1)
 @click.pass_context
-def plugin(ctx, plugin, content_dir, plugin_args):
-    plugin_spec = spec_from_file_location('plugin', plugin)
-    plugin_module = module_from_spec(plugin_spec)
-    plugin_spec.loader.exec_module(plugin_module)
+def content_task(ctx, task_file_path, content_dir, task_args):
+    task_spec = spec_from_file_location('content_task', task_file_path)
+    task_module = module_from_spec(task_spec)
+    task_spec.loader.exec_module(task_module)
 
     def noop(*args, **kwargs):
         pass
 
-    collection_action = (plugin_module.with_collection
-        if hasattr(plugin_module, 'with_collection')
+    collection_action = (task_module.with_collection
+        if hasattr(task_module, 'with_collection')
         else noop)
-    module_action = (plugin_module.with_module
-        if hasattr(plugin_module, 'with_module')
+    module_action = (task_module.with_module
+        if hasattr(task_module, 'with_module')
         else noop)
 
     def to_str_dict(collection_or_module):
