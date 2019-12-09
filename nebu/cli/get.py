@@ -158,33 +158,8 @@ def store_sha1(sha1, write_dir, filename):
         s.write('{}  {}\n'.format(sha1, filename))
 
 
-def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
-                pbar=None, depth=None, pos={0: 0}, lvl=0):
-    """Recursively write out contents of a book
-       Arguments are:
-        root of the json tree, archive url to fetch from, existing directory
-       to write out to, format to write (book tree or flat) as well as a
-       click progress bar, if desired. Depth is height of tree, used to reset
-       the lowest level counter (pages) per chapter. All other levels (Chapter,
-       unit) count up for entire book. Remaining args are used for recursion"""
-    if depth is None:
-        depth = _tree_depth(node)
-        pos = {0: 0}
-        lvl = 0
-    if book_tree:
-        #  HACK Prepending zero-filled numbers to folders to fix the sort order
-        if lvl > 0:
-            dirname = '{:02d} {}'.format(pos[lvl], _safe_name(node['title']))
-        else:
-            dirname = _safe_name(node['title'])  # book name gets no number
-
-        out_dir = out_dir / dirname
-        os.mkdir(str(out_dir))
-
-    write_dir = out_dir  # Allows nesting only for book_tree case
-
-    # Fetch and store the core file for each node
-    resp = requests.get('{}/contents/{}'.format(base_url, node['id']))
+def _fetch_node(base_url, write_dir, book_tree, get_resources, node_id, pbar):
+    resp = requests.get('{}/contents/{}'.format(base_url, node_id))
     if resp:  # Subcollections cannot (yet) be fetched directly
         metadata = resp.json()
 
@@ -227,6 +202,36 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
 
         if pbar is not None:
             pbar.update(1)
+
+
+def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
+                pbar=None, depth=None, pos={0: 0}, lvl=0):
+    """Recursively write out contents of a book
+       Arguments are:
+        root of the json tree, archive url to fetch from, existing directory
+       to write out to, format to write (book tree or flat) as well as a
+       click progress bar, if desired. Depth is height of tree, used to reset
+       the lowest level counter (pages) per chapter. All other levels (Chapter,
+       unit) count up for entire book. Remaining args are used for recursion"""
+    if depth is None:
+        depth = _tree_depth(node)
+        pos = {0: 0}
+        lvl = 0
+    if book_tree:
+        #  HACK Prepending zero-filled numbers to folders to fix the sort order
+        if lvl > 0:
+            dirname = '{:02d} {}'.format(pos[lvl], _safe_name(node['title']))
+        else:
+            dirname = _safe_name(node['title'])  # book name gets no number
+
+        out_dir = out_dir / dirname
+        os.mkdir(str(out_dir))
+
+    write_dir = out_dir  # Allows nesting only for book_tree case
+
+    # Fetch and store the core file for each node
+    _fetch_node(base_url, write_dir, book_tree, get_resources, node['id'],
+                pbar)
 
     if 'contents' in node:  # Top-level or subcollection - recurse
         lvl += 1
