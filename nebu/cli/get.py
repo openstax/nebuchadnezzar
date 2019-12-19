@@ -163,7 +163,7 @@ def store_sha1(sha1, write_dir, filename):
 
 
 def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
-                pbar=None, depth=None, pos={0: 0}, lvl=0):
+                pbar=None, depth=None, position={0: 0}, level=0):
     """Recursively write out contents of a book
        Arguments are:
         root of the json tree, archive url to fetch from, existing directory
@@ -173,12 +173,12 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
        unit) count up for entire book. Remaining args are used for recursion"""
     if depth is None:
         depth = _tree_depth(node)
-        pos = {0: 0}
-        lvl = 0
+        position = {0: 0}
+        level = 0
     if book_tree:
         #  HACK Prepending zero-filled numbers to folders to fix the sort order
-        if lvl > 0:
-            dirname = '{:02d} {}'.format(pos[lvl], _safe_name(node['title']))
+        if level > 0:
+            dirname = '{:02d} {}'.format(position[level], _safe_name(node['title']))
         else:
             dirname = _safe_name(node['title'])  # book name gets no number
 
@@ -233,17 +233,17 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
             pbar.update(1)
 
     if 'contents' in node:  # Top-level or subcollection - recurse
-        lvl += 1
-        if lvl not in pos:
-            pos[lvl] = 0
-        if lvl == depth:  # Reset counter for bottom-most level: pages
-            pos[lvl] = 0
+        level += 1
+        if level not in position:
+            position[level] = 0
+        if level == depth:  # Reset counter for bottom-most level: pages
+            position[level] = 0
         for child in node['contents']:
             #  HACK - the silly don't number Preface/Introduction logic
-            if ((lvl == 1 and pos[1] == 0 and 'Preface' in child['title']) or
-                    (pos[lvl] == 0 and child['title'] == 'Introduction')):
-                pos[lvl] = 0
+            if ((level == 1 and position[1] == 0 and 'Preface' in child['title']) or
+                    (position[level] == 0 and child['title'] == 'Introduction')):
+                position[level] = 0
             else:
-                pos[lvl] += 1
+                position[level] += 1
             _write_node(child, base_url, out_dir, book_tree, get_resources,
-                        pbar, depth, pos, lvl)
+                        pbar, depth, position, level)
