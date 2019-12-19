@@ -1,4 +1,5 @@
 import os
+import time
 
 import click
 import requests
@@ -12,6 +13,7 @@ from .exceptions import (MissingContent,
                          ExistingOutputDir,
                          OldContent,
                          )
+
 
 
 @click.command()
@@ -28,7 +30,7 @@ from .exceptions import (MissingContent,
 @click.pass_context
 def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
     """download and expand the completezip to the current working directory"""
-
+    start_time = time.time()
     base_url = build_archive_url(ctx, env)
 
     version = None
@@ -130,6 +132,8 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
                            show_pos=True) as pbar:
         _write_node(tree, base_url, output_dir, book_tree, get_resources, pbar)
 
+    duration = time.time() - start_time
+    print("Fetch took {} seconds".format(duration))
 
 def _count_leaves(node):
     if 'contents' in node:
