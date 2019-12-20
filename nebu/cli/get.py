@@ -270,18 +270,20 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, with_resources):
     adapter = requests.adapters.HTTPAdapter(max_retries=5)
     session.mount('https://', adapter)
 
+    # Fetch Metadata
     legacy_url = build_legacy_url(base_url, col_id, col_version)
-    collection_metadata = fetch_metadata(session, base_url, legacy_url, col_id, req_version, version)
+    metadata = fetch_metadata(session, base_url, legacy_url, col_id, req_version, version)
 
-    version = collection_metadata['version']
+    # Build Output Directory
+    version = metadata['version']
     output_dir = build_output_directory(output_dir, col_id, version)
 
-    uuid = collection_metadata['id']
-    latest = col_version == 'latest'
-    fetch_extras(session, base_url, uuid, version, col_id, latest)
+    # Fetch Extras
+    uuid = metadata['id']
+    fetch_extras(session, base_url, uuid, version, col_id, col_version == 'latest')
 
-    # Write tree
-    tree = collection_metadata['tree']
+    # Write tree ???
+    tree = metadata['tree']
     os.mkdir(str(output_dir))
 
     num_pages = _count_nodes(tree) + 1  # Num. of xml files to fetch
