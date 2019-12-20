@@ -14,6 +14,9 @@ from .exceptions import (MissingContent,
                          OldContent,
                          )
 
+import concurrent.futures
+import urllib.request
+
 @click.command()
 @common_params
 @click.option('-d', '--output-dir', type=click.Path(),
@@ -160,19 +163,51 @@ def store_sha1(sha1, write_dir, filename):
     with (write_dir / '.sha1sum').open('a') as s:
         s.write('{}  {}\n'.format(sha1, filename))
 
+# Retrieve a single page and report the URL and contents
+def load_url(url, timeout):
+    with urllib.request.urlopen(url, timeout=timeout) as conn:
+        return conn.read()
+
 def _get_resources(resources, filename, write_dir):
     print('\n++++++++++++ GETTING RESOURCES +++++++++++')
-    for res in resources:  # Dict keyed by resource filename
-        #  Exclude core file, already written out
-        if res != filename:
-            filepath = write_dir / res
-            url = resources[res]['url']
-            file_resp = requests.get(url)
-            filepath.write_bytes(file_resp.content)
-            store_sha1(resources[res]['id'], write_dir, res) # NOTE: the id is the sha1
-            print('GETTING RESOURCE FOR: {}'.format(res))
-        else:
-            print('NOT GETTING RESOURCE FOR: {}'.format(res))
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        futures_to_url =  {}
+        for resource in resources:
+            url = resources[resource]['url']
+            futures_to_url.update({executor.submit(load_url, url, 60): resource})
+
+        for future in concurrent.futures.as_completed(futures_to_url):
+            resource = futures_to_url[future]
+            if resource == filename:
+                print('NOT GETTING RESOURCE FOR: {}'.format(resource))
+                pass
+            else:
+                content = future.result()
+                file_path = write_dir / resource
+                file_path.write_bytes(content)
+                store_sha1(resources[resource]['id'], write_dir, resource) # NOTE: the id is the sha1
+                print('GETTING RESOURCE FOR: {}'.format(resource))
+
+
+# def _get_resources(resources, filename, write_dir):
+#     print('\n++++++++++++ GETTING RESOURCES +++++++++++')
+#     for res in resources:  # Dict keyed by resource filename
+#         #  Exclude core file, already written out
+#         if res != filename:
+#             filepath = write_dir / res
+#             url = resources[res]['url']
+#             file_resp = requests.get(url)
+#
+#             hey = "check file resp"
+#             from IPython import embed
+#             embed()
+#
+#             filepath.write_bytes(file_resp.content)
+#             store_sha1(resources[res]['id'], write_dir, res) # NOTE: the id is the sha1
+#             print('GETTING RESOURCE FOR: {}'.format(res))
+#         else:
+#             print('NOT GETTING RESOURCE FOR: {}'.format(res))
 
 def _clean_resources(metadata, base_url):
     resources = {}
