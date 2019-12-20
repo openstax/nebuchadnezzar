@@ -141,10 +141,10 @@ def _count_leaves(node):
 
 def _get_depth(node):
     if 'contents' in node:
-        dis_list = []
+        depths = []
         for childnode in node['contents']:
-            dis_list.append(_get_depth(childnode))
-        return max(dis_list) + 1
+            depths.append(_get_depth(childnode))
+        return max(depths) + 1
     else:
         return 0
 
@@ -161,6 +161,7 @@ def store_sha1(sha1, write_dir, filename):
         s.write('{}  {}\n'.format(sha1, filename))
 
 def _get_resources(resources, filename, write_dir):
+    print('\n++++++++++++ GETTING RESOURCES +++++++++++')
     for res in resources:  # Dict keyed by resource filename
         #  Exclude core file, already written out
         if res != filename:
@@ -169,6 +170,9 @@ def _get_resources(resources, filename, write_dir):
             file_resp = requests.get(url)
             filepath.write_bytes(file_resp.content)
             store_sha1(resources[res]['id'], write_dir, res) # NOTE: the id is the sha1
+            print('GETTING RESOURCE FOR: {}'.format(res))
+        else:
+            print('NOT GETTING RESOURCE FOR: {}'.format(res))
 
 def _clean_resources(metadata, base_url):
     resources = {}
@@ -203,8 +207,10 @@ def _make_human_readable_directories(out_dir, book_level, position, node):
 
 def _write_node(node, base_url, out_dir, book_tree=False, with_resources=False,
                 pbar=None, depth=None, position={0: 0}, book_level=0):
-    print('\n\n')
-    print('NEW NODE ON THE BLOCK!!')
+    print("\n")
+    print("%%" * 300)
+    print('\n')
+    print('==== NEW NODE ON THE BLOCK ====')
     """ Recursively write out contents of a book"""
     print("node: {}".format(node))                        ## Root of the json tree
     print("base_url: {}".format(base_url))                ## Archive url to fetch from
@@ -265,15 +271,12 @@ def _write_node(node, base_url, out_dir, book_tree=False, with_resources=False,
             #  HACK - Silly don't number Preface/Introduction logic
             preface = (book_level == 1 and position[1] == 0 and 'Preface' in childnode['title'])
             introduction = (position[book_level] == 0 and childnode['title'] == 'Introduction')
-
             if preface or introduction:
                 position[book_level] = 0
             else:
                 position[book_level] += 1
-
             # if position.get(2) is None or position.get(2) < 2:
             #     _write_node(childnode, base_url, out_dir, book_tree, with_resources,
             #                 pbar, depth, position, book_level)
-
             _write_node(childnode, base_url, out_dir, book_tree, with_resources,
                         pbar, depth, position, book_level)
