@@ -20,13 +20,13 @@ from .exceptions import (MissingContent,
               help="output directory name (can't previously exist)")
 @click.option('-t', '--book-tree', is_flag=True,
               help="create human-friendly book-tree")
-@click.option('-r', '--get-resources', is_flag=True, default=False,
+@click.option('-r', '--with-resources', is_flag=True, default=False,
               help="Also get all resources (images)")
 @click.argument('env')
 @click.argument('col_id')
 @click.argument('col_version')
 @click.pass_context
-def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
+def get(ctx, env, col_id, col_version, output_dir, book_tree, with_resources):
     """download and expand the completezip to the current working directory"""
     start_time = time.time()
     base_url = build_archive_url(ctx, env)
@@ -128,7 +128,7 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
                            label=label,
                            width=0,
                            show_pos=True) as pbar:
-        _write_node(tree, base_url, output_dir, book_tree, get_resources, pbar)
+        _write_node(tree, base_url, output_dir, book_tree, with_resources, pbar)
 
     duration = time.time() - start_time
     print("Fetch took {} seconds".format(duration))
@@ -139,9 +139,12 @@ def _count_leaves(node):
     else:
         return 1
 
-def _tree_depth(node):
+def _get_depth(node):
     if 'contents' in node:
-        return max([_tree_depth(childnode) for childnode in node['contents']]) + 1
+        dis_list = []
+        for childnode in node['contents']:
+            dis_list.append(_get_depth(childnode))
+        return max(dis_list) + 1
     else:
         return 0
 
@@ -157,7 +160,7 @@ def store_sha1(sha1, write_dir, filename):
     with (write_dir / '.sha1sum').open('a') as s:
         s.write('{}  {}\n'.format(sha1, filename))
 
-def _gettem(resources, filename, write_dir):
+def _get_resources(resources, filename, write_dir):
     for res in resources:  # Dict keyed by resource filename
         #  Exclude core file, already written out
         if res != filename:
@@ -186,41 +189,46 @@ def _cache_node_sha1(write_dir, filename):
     sha1 = calculate_sha1(write_dir / filename)
     store_sha1(sha1, write_dir, filename)
 
-def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
-                pbar=None, depth=None, position={0: 0}, level=0):
+def _make_human_readable_directories(out_dir, book_level, position, node):
+    #  HACK Prepending zero-filled numbers to folders to fix the sort order
+    if book_level == 0:
+        dirname = _safe_name(node['title'])
+    else:
+        dirname = '{:02d} {}'.format(position[book_level], _safe_name(node['title']))
 
+    out_dir = out_dir / dirname
+    os.mkdir(str(out_dir))
+    return out_dir
+
+
+def _write_node(node, base_url, out_dir, book_tree=False, with_resources=False,
+                pbar=None, depth=None, position={0: 0}, book_level=0):
+    print('\n\n')
+    print('NEW NODE ON THE BLOCK!!')
     """ Recursively write out contents of a book"""
     print("node: {}".format(node))                        ## Root of the json tree
     print("base_url: {}".format(base_url))                ## Archive url to fetch from
     print("out_dir: {}".format(out_dir))                  ## Existing directory to write out to
     print("book_tree: {}".format(book_tree))              ## Format to write (book tree or flat) as well as a click progress bar, if desired
-    print("get_resources: {}".format(get_resources))
-    print("pbar=None: {}".format(pbar))
-    print("depth=None: {}".format(depth))                 ## Depth is height of tree
-    print("position: {}".format(position))                ## Used to reset the lowest level counter (pages) per chapter.
-    print("level: {}".format(level))                      ## All other levels (Chapter,unit) count up for entire book.
+    print("with_resources: {}".format(with_resources))
+    print("pbar: {}".format(pbar))
+    print("depth: {}".format(depth))                      ## Depth is height of tree
+    print("position: {}".format(position))                ## Used to reset the lowest book_level counter (pages) per chapter, i.e. position: {book: ##, chapter: ##, page: ##}
+    print("book_level: {}".format(book_level))                      ## Levels - 0: book, 1: unit , 2: chapter, 3: module/page, .... for A & P book col11496
     """ Remaining args are used for recursion """
 
     if depth is None:
-        depth = _tree_depth(node)
+        depth = _get_depth(node)
         position = {0: 0}
-        level = 0
+        book_level = 0
 
     if book_tree:
-        #  HACK Prepending zero-filled numbers to folders to fix the sort order
-        if level > 0:
-            dirname = '{:02d} {}'.format(position[level], _safe_name(node['title']))
-        else:
-            dirname = _safe_name(node['title'])  # book name gets no number
-
-        out_dir = out_dir / dirname
-        os.mkdir(str(out_dir))
+        out_dir = _make_human_readable_directories(out_dir, book_level, position, node)
 
     write_dir = out_dir  # Allows nesting only for book_tree case
 
     # Fetch and store the core file for each node
     resp = requests.get('{}/contents/{}'.format(base_url, node['id']))
-
     if resp:  # Subcollections cannot (yet) be fetched directly
         metadata = resp.json()
         resources = _clean_resources(metadata, base_url)
@@ -230,9 +238,8 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
         url = resources[filename]['url']
         file_resp = requests.get(url)
 
-        #write out core file
         if not(book_tree) and filename == 'index.cnxml':
-            write_dir = write_dir / metadata['legacy_id']
+            write_dir = write_dir / metadata['legacy_id'] #write_dir changes if you're not a book tree and you have a filename index.cnxml
             os.mkdir(str(write_dir))
 
         filepath = write_dir / filename
@@ -242,23 +249,31 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
 
         _cache_node_sha1(write_dir, filename)
 
-        if get_resources:
-            _gettem(resources, filename, write_dir)
+        if with_resources:
+            _get_resources(resources, filename, write_dir)
 
         if pbar is not None:
             pbar.update(1)
 
-    if 'contents' in node:  # Top-level or subcollection - recurse
-        level += 1
-        if level not in position:
-            position[level] = 0
-        if level == depth:  # Reset counter for bottom-most level: pages
-            position[level] = 0
+    if 'contents' in node:  # Top-book_level or subcollection - recurse
+        book_level += 1
+        if book_level not in position:
+            position[book_level] = 0
+        if book_level == depth:  # Reset counter for bottom-most book_level: pages
+            position[book_level] = 0
         for childnode in node['contents']:
-            #  HACK - the silly don't number Preface/Introduction logic
-            if ((level == 1 and position[1] == 0 and 'Preface' in childnode['title']) or (position[level] == 0 and childnode['title'] == 'Introduction')):
-                position[level] = 0
+            #  HACK - Silly don't number Preface/Introduction logic
+            preface = (book_level == 1 and position[1] == 0 and 'Preface' in childnode['title'])
+            introduction = (position[book_level] == 0 and childnode['title'] == 'Introduction')
+
+            if preface or introduction:
+                position[book_level] = 0
             else:
-                position[level] += 1
-            _write_node(childnode, base_url, out_dir, book_tree, get_resources,
-                        pbar, depth, position, level)
+                position[book_level] += 1
+
+            # if position.get(2) is None or position.get(2) < 2:
+            #     _write_node(childnode, base_url, out_dir, book_tree, with_resources,
+            #                 pbar, depth, position, book_level)
+
+            _write_node(childnode, base_url, out_dir, book_tree, with_resources,
+                        pbar, depth, position, book_level)

@@ -116,7 +116,10 @@ class TestGetCmd:
         from nebu.cli.main import cli
         args = ['get', 'test-env', col_id, col_version]
         result = invoker(cli, args)
-
+        print("\n")
+        print("**" * 40)
+        print("**" * 40)
+        print(result)
         assert result.exit_code == 0
 
         dir = tmpcwd / '{}_1.{}'.format(col_id, '2.1')
@@ -163,9 +166,10 @@ class TestGetCmd:
                      '8ddfc8de-5164-5828-9fed-d0ed17edb489@2.1')
 
         from nebu.cli.main import cli
-        args = ['get', '--get-resources', 'test-env', col_id, col_version]
+        args = ['get', '--with-resources', 'test-env', col_id, col_version]
         result = invoker(cli, args)
-
+        print("**" * 40)
+        print(result)
         assert result.exit_code == 0
 
         dir = tmpcwd / '{}_1.{}'.format(col_id, '2.1')
@@ -221,7 +225,8 @@ class TestGetCmd:
             from nebu.cli.main import cli
             args = ['get', 'test-env', col_id, trip_ver]
             result = invoker(cli, args)
-
+            print("**" * 40)
+            print(result)
         assert result.exit_code == 0
 
         dir = tmpcwd / '{}_1.{}'.format(col_id, '1.1')
@@ -262,7 +267,8 @@ class TestGetCmd:
         from nebu.cli.main import cli
         args = ['get', 'test-env', col_id, trip_ver]
         result = invoker(cli, args)
-
+        print("**" * 40)
+        print(result)
         assert result.exit_code == 4
 
         msg = "content unavailable for '{}/{}'".format(col_id, trip_ver)
@@ -306,7 +312,8 @@ class TestGetCmd:
         from nebu.cli.main import cli
         args = ['get', '-d', str(outdir), 'test-env', col_id, col_version]
         result = invoker(cli, args)
-
+        print("**" * 40)
+        print(result)
         assert result.exit_code == 0
 
         outdir = tmpcwd / '{}_1.{}'.format(col_id, '2.1')
@@ -355,7 +362,8 @@ class TestGetCmd:
         from nebu.cli.main import cli
         args = ['get', '-t', 'test-env', col_id, col_version]
         result = invoker(cli, args)
-
+        print("**" * 40)
+        print(result)
         assert result.exit_code == 0
 
         dir = tmpcwd / '{}_1.{}'.format(col_id, '2.1')
@@ -406,7 +414,8 @@ class TestGetCmd:
             from nebu.cli.main import cli
             args = ['get', 'test-env', '-d', 'mydir', col_id, col_version]
             result = invoker(cli, args)
-
+            print("**" * 40)
+            print(result)
         assert result.exit_code == 0
 
         dir = tmpcwd / 'mydir'
@@ -458,7 +467,8 @@ class TestGetCmd:
             args = ['get', 'test-env', '-t',
                     '-d', 'mydir', col_id, col_version]
             result = invoker(cli, args)
-
+            print("**" * 40)
+            print(result)
         assert result.exit_code == 0
 
         dir = tmpcwd / 'mydir'
@@ -496,7 +506,8 @@ class TestGetCmd:
             from nebu.cli.main import cli
             args = ['get', 'test-env', col_id, col_version]
             result = invoker(cli, args)
-
+            print("**" * 40)
+            print(result)
         assert result.exit_code == 6
 
         msg = "Non-latest version requested"
@@ -537,7 +548,8 @@ class TestGetCmd:
         from nebu.cli.main import cli
         args = ['get', 'test-env', col_id, col_version]
         result = invoker(cli, args)
-
+        print("**" * 40)
+        print(result)
         assert result.exit_code == 0
 
         dir = tmpcwd / '{}_1.{}'.format(col_id, '2.1')
@@ -567,7 +579,8 @@ class TestGetCmd:
         from nebu.cli.main import cli
         args = ['get', 'test-env', col_id, col_version]
         result = invoker(cli, args)
-
+        print("**" * 40)
+        print(result)
         assert result.exit_code == 3
 
         assert 'directory already exists:' in result.output
@@ -578,7 +591,8 @@ class TestGetCmd:
         from nebu.cli.main import cli
         args = ['get', 'test-env', col_id]
         result = invoker(cli, args)
-
+        print("**" * 40)
+        print(result)
         assert result.exit_code == 2
 
         assert 'Missing argument "COL_VERSION"' in result.output
@@ -594,7 +608,8 @@ class TestGetCmd:
         from nebu.cli.main import cli
         args = ['get', 'test-env', col_id, col_ver]
         result = invoker(cli, args)
-
+        print("**" * 40)
+        print(result)
         assert result.exit_code == 4
 
         msg = "content unavailable for '{}/{}'".format(col_id, col_ver)
@@ -626,7 +641,8 @@ class TestGetCmd:
         from nebu.cli.main import cli
         args = ['get', 'test-env', col_id, col_version]
         result = invoker(cli, args)
-
+        print("**" * 40)
+        print(result)
         assert result.exit_code == 4
 
         msg = "content unavailable for '{}/{}'".format(col_id, col_version)
