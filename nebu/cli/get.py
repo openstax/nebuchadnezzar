@@ -139,41 +139,35 @@ def _count_leaves(node):
     else:
         return 1
 
-
 def _tree_depth(node):
     if 'contents' in node:
         return max([_tree_depth(childnode) for childnode in node['contents']]) + 1
     else:
         return 0
 
-
 filename_by_type = {
     'application/vnd.org.cnx.collection': 'collection.xml',
     'application/vnd.org.cnx.module': 'index.cnxml'
     }
 
-
 def _safe_name(name):
     return name.replace('/', '∕').replace(':', '∶')
-
 
 def store_sha1(sha1, write_dir, filename):
     with (write_dir / '.sha1sum').open('a') as s:
         s.write('{}  {}\n'.format(sha1, filename))
 
-def _gettem(resources, filename, write_dir, base_url):
+def _gettem(resources, filename, write_dir):
     for res in resources:  # Dict keyed by resource filename
-        #  Exclude core file, already written out, above
+        #  Exclude core file, already written out
         if res != filename:
             filepath = write_dir / res
-            url = '{}/resources/{}'.format(base_url,
-                                           resources[res]['id'])
+            url = resources[res]['url']
             file_resp = requests.get(url)
             filepath.write_bytes(file_resp.content)
-            # NOTE: the id is the sha1
-            store_sha1(resources[res]['id'], write_dir, res)
+            store_sha1(resources[res]['id'], write_dir, res) # NOTE: the id is the sha1
 
-def _clean_resources(metadata):
+def _clean_resources(metadata, base_url):
     resources = {}
     file_to_skip = 'index.cnxml.html'
     """
@@ -183,7 +177,9 @@ def _clean_resources(metadata):
     """
     for res in metadata['resources']:
         if res['filename'] != file_to_skip:
+            res.update({'url': '{}/resources/{}'.format(base_url, res['id'])})
             resources.update({res['filename'] : res})
+
     return resources
 
 def _cache_node_sha1(write_dir, filename):
@@ -224,20 +220,22 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
 
     # Fetch and store the core file for each node
     resp = requests.get('{}/contents/{}'.format(base_url, node['id']))
+
     if resp:  # Subcollections cannot (yet) be fetched directly
         metadata = resp.json()
-        resources = _clean_resources(metadata)
+        resources = _clean_resources(metadata, base_url)
 
         # Deal with core XML file and output directory
-        filename = filename_by_type[metadata['mediaType']] #collection.xml or index.cnxml
-        url = '{}/resources/{}'.format(base_url, resources[filename]['id'])
+        filename = filename_by_type[metadata['mediaType']] #returns collection.xml or index.cnxml
+        url = resources[filename]['url']
         file_resp = requests.get(url)
 
+        #write out core file
         if not(book_tree) and filename == 'index.cnxml':
             write_dir = write_dir / metadata['legacy_id']
             os.mkdir(str(write_dir))
-        filepath = write_dir / filename
 
+        filepath = write_dir / filename
         # core files are XML - this parse/serialize removes numeric entities
         filepath.write_bytes(etree.tostring(etree.XML(file_resp.content),
                                             encoding='utf-8'))
@@ -245,7 +243,7 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
         _cache_node_sha1(write_dir, filename)
 
         if get_resources:
-            _gettem(resources, filename, write_dir, base_url)
+            _gettem(resources, filename, write_dir)
 
         if pbar is not None:
             pbar.update(1)
