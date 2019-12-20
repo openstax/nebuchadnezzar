@@ -1,4 +1,3 @@
-import os
 import asyncio
 from itertools import groupby
 from traceback import print_tb
@@ -86,14 +85,8 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
     version = col_metadata['version']
 
     # Generate full output dir as soon as we have the version
-    if output_dir is None:
-        output_dir = Path.cwd() / '{}_1.{}'.format(col_id, version)
-    else:
-        output_dir = Path(output_dir)
-        if not output_dir.is_absolute():
-            output_dir = Path.cwd() / output_dir
-
-    # ... and check if it's already been downloaded
+    output_dir = output_dir or f'{col_id}_1.{version}'
+    output_dir = Path(output_dir).resolve()
     if output_dir.exists():
         raise ExistingOutputDir(output_dir)
 
@@ -120,14 +113,13 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
 
     # Write tree
     tree = col_metadata['tree']
-    os.mkdir(str(output_dir))
 
     num_pages = _count_nodes(tree)
     try:
-        label = 'Getting {}'.format(output_dir.relative_to(Path.cwd()))
+        label = f'Getting {output_dir.relative_to(Path.cwd())}'
     except ValueError:
-        # Raised ONLY when output_dir is not a child of cwd
-        label = 'Getting {}'.format(output_dir)
+        # Raised when output_dir is not a child of cwd
+        label = f'Getting {output_dir}'
     with click.progressbar(length=num_pages,
                            label=label,
                            width=0,
@@ -303,12 +295,8 @@ async def _write_contents(tree,
         legacy_id = get_legacy_id()
 
         scoped_directory = get_scoped_directory()
-
         write_dir = write_dir / scoped_directory
-        try:
-            os.mkdir(str(write_dir))
-        except FileExistsError:
-            pass
+        write_dir.mkdir(parents=True, exist_ok=True)
 
         if resource_groups is not None:
             enqueue_content()
