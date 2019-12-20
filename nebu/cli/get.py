@@ -14,8 +14,6 @@ from .exceptions import (MissingContent,
                          OldContent,
                          )
 
-
-
 @click.command()
 @common_params
 @click.option('-d', '--output-dir', type=click.Path(),
@@ -161,6 +159,17 @@ def store_sha1(sha1, write_dir, filename):
     with (write_dir / '.sha1sum').open('a') as s:
         s.write('{}  {}\n'.format(sha1, filename))
 
+def gettem(resources, filename, write_dir, base_url):
+    for res in resources:  # Dict keyed by resource filename
+        #  Exclude core file, already written out, above
+        if res != filename:
+            filepath = write_dir / res
+            url = '{}/resources/{}'.format(base_url,
+                                           resources[res]['id'])
+            file_resp = requests.get(url)
+            filepath.write_bytes(file_resp.content)
+            # NOTE: the id is the sha1
+            store_sha1(resources[res]['id'], write_dir, res)
 
 def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
                 pbar=None, depth=None, position={0: 0}, level=0):
@@ -218,16 +227,7 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
         store_sha1(sha1, write_dir, filename)
 
         if get_resources:
-            for res in resources:  # Dict keyed by resource filename
-                #  Exclude core file, already written out, above
-                if res != filename:
-                    filepath = write_dir / res
-                    url = '{}/resources/{}'.format(base_url,
-                                                   resources[res]['id'])
-                    file_resp = requests.get(url)
-                    filepath.write_bytes(file_resp.content)
-                    # NOTE: the id is the sha1
-                    store_sha1(resources[res]['id'], write_dir, res)
+            gettem(resources, filename, write_dir, base_url)
 
         if pbar is not None:
             pbar.update(1)
