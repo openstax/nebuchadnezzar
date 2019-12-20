@@ -122,7 +122,7 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
     try:
         label = 'Getting {}'.format(output_dir.relative_to(Path.cwd()))
     except ValueError:
-        # Raised ONLY when output_dir is not a child of cwd
+        # Raised ONLY when output_dir is not a childnode of cwd
         label = 'Getting {}'.format(output_dir)
     with click.progressbar(length=num_pages,
                            label=label,
@@ -135,20 +135,22 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
 
 def _count_leaves(node):
     if 'contents' in node:
-        return sum([_count_leaves(child) for child in node['contents']])
+        return sum([_count_leaves(childnode) for childnode in node['contents']])
     else:
         return 1
 
 
 def _tree_depth(node):
     if 'contents' in node:
-        return max([_tree_depth(child) for child in node['contents']]) + 1
+        return max([_tree_depth(childnode) for childnode in node['contents']]) + 1
     else:
         return 0
 
 
-filename_by_type = {'application/vnd.org.cnx.collection': 'collection.xml',
-                    'application/vnd.org.cnx.module': 'index.cnxml'}
+filename_by_type = {
+    'application/vnd.org.cnx.collection': 'collection.xml',
+    'application/vnd.org.cnx.module': 'index.cnxml'
+    }
 
 
 def _safe_name(name):
@@ -159,7 +161,7 @@ def store_sha1(sha1, write_dir, filename):
     with (write_dir / '.sha1sum').open('a') as s:
         s.write('{}  {}\n'.format(sha1, filename))
 
-def gettem(resources, filename, write_dir, base_url):
+def _gettem(resources, filename, write_dir, base_url):
     for res in resources:  # Dict keyed by resource filename
         #  Exclude core file, already written out, above
         if res != filename:
@@ -171,19 +173,43 @@ def gettem(resources, filename, write_dir, base_url):
             # NOTE: the id is the sha1
             store_sha1(resources[res]['id'], write_dir, res)
 
+def _clean_resources(metadata):
+    resources = {}
+    file_to_skip = 'index.cnxml.html'
+    """
+    index.cnxml.html files should not be edited nor published.
+    They are generated and regenerated in-place in the database.
+    So they are excluded from resources to download.
+    """
+    for res in metadata['resources']:
+        if res['filename'] != file_to_skip:
+            resources.update({res['filename'] : res})
+    return resources
+
+def _cache_node_sha1(write_dir, filename):
+    sha1 = calculate_sha1(write_dir / filename)
+    store_sha1(sha1, write_dir, filename)
+
 def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
                 pbar=None, depth=None, position={0: 0}, level=0):
-    """Recursively write out contents of a book
-       Arguments are:
-        root of the json tree, archive url to fetch from, existing directory
-       to write out to, format to write (book tree or flat) as well as a
-       click progress bar, if desired. Depth is height of tree, used to reset
-       the lowest level counter (pages) per chapter. All other levels (Chapter,
-       unit) count up for entire book. Remaining args are used for recursion"""
+
+    """ Recursively write out contents of a book"""
+    print("node: {}".format(node))                        ## Root of the json tree
+    print("base_url: {}".format(base_url))                ## Archive url to fetch from
+    print("out_dir: {}".format(out_dir))                  ## Existing directory to write out to
+    print("book_tree: {}".format(book_tree))              ## Format to write (book tree or flat) as well as a click progress bar, if desired
+    print("get_resources: {}".format(get_resources))
+    print("pbar=None: {}".format(pbar))
+    print("depth=None: {}".format(depth))                 ## Depth is height of tree
+    print("position: {}".format(position))                ## Used to reset the lowest level counter (pages) per chapter.
+    print("level: {}".format(level))                      ## All other levels (Chapter,unit) count up for entire book.
+    """ Remaining args are used for recursion """
+
     if depth is None:
         depth = _tree_depth(node)
         position = {0: 0}
         level = 0
+
     if book_tree:
         #  HACK Prepending zero-filled numbers to folders to fix the sort order
         if level > 0:
@@ -200,19 +226,13 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
     resp = requests.get('{}/contents/{}'.format(base_url, node['id']))
     if resp:  # Subcollections cannot (yet) be fetched directly
         metadata = resp.json()
-
-        """index.cnxml.html files should not be edited nor published (they are
-        generated and regenerated in-place in the database), so let's just
-        not consider them as resources (or download them) at all.
-        """
-        # skip index.cnxml.html
-        resources = {res['filename']: res for res in metadata['resources']
-                     if res['filename'] != 'index.cnxml.html'}
+        resources = _clean_resources(metadata)
 
         # Deal with core XML file and output directory
-        filename = filename_by_type[metadata['mediaType']]
+        filename = filename_by_type[metadata['mediaType']] #collection.xml or index.cnxml
         url = '{}/resources/{}'.format(base_url, resources[filename]['id'])
         file_resp = requests.get(url)
+
         if not(book_tree) and filename == 'index.cnxml':
             write_dir = write_dir / metadata['legacy_id']
             os.mkdir(str(write_dir))
@@ -222,12 +242,10 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
         filepath.write_bytes(etree.tostring(etree.XML(file_resp.content),
                                             encoding='utf-8'))
 
-        # Cache the sha1 for this node
-        sha1 = calculate_sha1(write_dir / filename)
-        store_sha1(sha1, write_dir, filename)
+        _cache_node_sha1(write_dir, filename)
 
         if get_resources:
-            gettem(resources, filename, write_dir, base_url)
+            _gettem(resources, filename, write_dir, base_url)
 
         if pbar is not None:
             pbar.update(1)
@@ -238,12 +256,11 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
             position[level] = 0
         if level == depth:  # Reset counter for bottom-most level: pages
             position[level] = 0
-        for child in node['contents']:
+        for childnode in node['contents']:
             #  HACK - the silly don't number Preface/Introduction logic
-            if ((level == 1 and position[1] == 0 and 'Preface' in child['title']) or
-                    (position[level] == 0 and child['title'] == 'Introduction')):
+            if ((level == 1 and position[1] == 0 and 'Preface' in childnode['title']) or (position[level] == 0 and childnode['title'] == 'Introduction')):
                 position[level] = 0
             else:
                 position[level] += 1
-            _write_node(child, base_url, out_dir, book_tree, get_resources,
+            _write_node(childnode, base_url, out_dir, book_tree, get_resources,
                         pbar, depth, position, level)
