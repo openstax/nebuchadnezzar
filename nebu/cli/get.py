@@ -1,4 +1,6 @@
 import os
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import click
 import requests
@@ -14,6 +16,9 @@ from .exceptions import (MissingContent,
                          )
 
 
+progress_bar_lock = threading.Lock()
+
+
 @click.command()
 @common_params
 @click.option('-d', '--output-dir', type=click.Path(),
@@ -22,11 +27,15 @@ from .exceptions import (MissingContent,
               help="create human-friendly book-tree")
 @click.option('-r', '--get-resources', is_flag=True, default=False,
               help="Also get all resources (images)")
+@click.option('--max-workers', default=20,
+              help='Maximum number of workers for parallel downloads, '
+              'default 20')
 @click.argument('env')
 @click.argument('col_id')
 @click.argument('col_version')
 @click.pass_context
-def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
+def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources,
+        max_workers):
     """download and expand the completezip to the current working directory"""
 
     base_url = build_archive_url(ctx, env)
@@ -124,11 +133,17 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, get_resources):
     except ValueError:
         # Raised ONLY when output_dir is not a child of cwd
         label = 'Getting {}'.format(output_dir)
+    futures = []
     with click.progressbar(length=num_pages,
                            label=label,
                            width=0,
                            show_pos=True) as pbar:
-        _write_node(tree, base_url, output_dir, book_tree, get_resources, pbar)
+        with ThreadPoolExecutor(max_workers=max_workers) as thread_pool:
+            _write_node(tree, base_url, output_dir, thread_pool, futures,
+                        book_tree, get_resources, pbar)
+    for f in futures:
+        if f.exception():
+            raise f.exception()
 
 
 def _count_leaves(node):
@@ -201,11 +216,12 @@ def _fetch_node(base_url, write_dir, book_tree, get_resources, node_id, pbar):
                     store_sha1(resources[res]['id'], write_dir, res)
 
         if pbar is not None:
-            pbar.update(1)
+            with progress_bar_lock:
+                pbar.update(1)
 
 
-def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
-                pbar=None, depth=None, pos={0: 0}, lvl=0):
+def _write_node(node, base_url, out_dir, thread_pool, futures, book_tree=False,
+                get_resources=False, pbar=None, depth=None, pos={0: 0}, lvl=0):
     """Recursively write out contents of a book
        Arguments are:
         root of the json tree, archive url to fetch from, existing directory
@@ -230,8 +246,9 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
     write_dir = out_dir  # Allows nesting only for book_tree case
 
     # Fetch and store the core file for each node
-    _fetch_node(base_url, write_dir, book_tree, get_resources, node['id'],
-                pbar)
+    futures.append(
+        thread_pool.submit(_fetch_node, base_url, write_dir, book_tree,
+                           get_resources, node['id'], pbar))
 
     if 'contents' in node:  # Top-level or subcollection - recurse
         lvl += 1
@@ -246,5 +263,5 @@ def _write_node(node, base_url, out_dir, book_tree=False, get_resources=False,
                 pos[lvl] = 0
             else:
                 pos[lvl] += 1
-            _write_node(child, base_url, out_dir, book_tree, get_resources,
-                        pbar, depth, pos, lvl)
+            _write_node(child, base_url, out_dir, thread_pool, futures,
+                        book_tree, get_resources, pbar, depth, pos, lvl)

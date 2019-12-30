@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from os import scandir
 from pathlib import Path
@@ -70,7 +71,8 @@ def test_utf8_content(tmpdir, requests_mock, datadir):
     requests_mock.get(url, content=cnxml)
 
     # Call the target
-    _write_node(node, base_url, out_dir)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        _write_node(node, base_url, out_dir, pool, [])
 
     # Verify the content is as specified
     with (datadir / 'unicode.cnxml').open('rb') as fb:
@@ -114,7 +116,7 @@ class TestGetCmd:
                      '8ddfc8de-5164-5828-9fed-d0ed17edb489@2.1')
 
         from nebu.cli.main import cli
-        args = ['get', 'test-env', col_id, col_version]
+        args = ['get', '--max-workers=1', 'test-env', col_id, col_version]
         result = invoker(cli, args)
 
         assert result.exit_code == 0
@@ -163,7 +165,8 @@ class TestGetCmd:
                      '8ddfc8de-5164-5828-9fed-d0ed17edb489@2.1')
 
         from nebu.cli.main import cli
-        args = ['get', '--get-resources', 'test-env', col_id, col_version]
+        args = ['get', '--max-workers=1', '--get-resources', 'test-env',
+                col_id, col_version]
         result = invoker(cli, args)
 
         assert result.exit_code == 0
@@ -219,7 +222,7 @@ class TestGetCmd:
         with monkeypatch.context() as m:
             m.setattr('builtins.input', lambda x: "y")
             from nebu.cli.main import cli
-            args = ['get', 'test-env', col_id, trip_ver]
+            args = ['get', '--max-workers=1', 'test-env', col_id, trip_ver]
             result = invoker(cli, args)
 
         assert result.exit_code == 0
@@ -260,7 +263,7 @@ class TestGetCmd:
                      'b699648f-405b-429f-bf11-37bad4246e7c@1.5')
 
         from nebu.cli.main import cli
-        args = ['get', 'test-env', col_id, trip_ver]
+        args = ['get', '--max-workers=1', 'test-env', col_id, trip_ver]
         result = invoker(cli, args)
 
         assert result.exit_code == 4
@@ -304,7 +307,8 @@ class TestGetCmd:
 
         outdir = tmpcwd / '{}_1.{}'.format(col_id, '2.1')
         from nebu.cli.main import cli
-        args = ['get', '-d', str(outdir), 'test-env', col_id, col_version]
+        args = ['get', '--max-workers=1', '-d', str(outdir), 'test-env',
+                col_id, col_version]
         result = invoker(cli, args)
 
         assert result.exit_code == 0
@@ -353,7 +357,8 @@ class TestGetCmd:
                      '8ddfc8de-5164-5828-9fed-d0ed17edb489@2.1')
 
         from nebu.cli.main import cli
-        args = ['get', '-t', 'test-env', col_id, col_version]
+        args = ['get', '--max-workers=1', '-t', 'test-env', col_id,
+                col_version]
         result = invoker(cli, args)
 
         assert result.exit_code == 0
@@ -404,7 +409,8 @@ class TestGetCmd:
         with monkeypatch.context() as m:
             m.setattr('builtins.input', lambda x: "y")
             from nebu.cli.main import cli
-            args = ['get', 'test-env', '-d', 'mydir', col_id, col_version]
+            args = ['get', 'test-env', '--max-workers=1', '-d', 'mydir',
+                    col_id, col_version]
             result = invoker(cli, args)
 
         assert result.exit_code == 0
@@ -455,7 +461,7 @@ class TestGetCmd:
         with monkeypatch.context() as m:
             m.setattr('builtins.input', lambda x: "y")
             from nebu.cli.main import cli
-            args = ['get', 'test-env', '-t',
+            args = ['get', 'test-env', '--max-workers=1', '-t',
                     '-d', 'mydir', col_id, col_version]
             result = invoker(cli, args)
 
@@ -494,7 +500,7 @@ class TestGetCmd:
         with monkeypatch.context() as m:
             m.setattr('builtins.input', lambda x: "n")
             from nebu.cli.main import cli
-            args = ['get', 'test-env', col_id, col_version]
+            args = ['get', '--max-workers=1', 'test-env', col_id, col_version]
             result = invoker(cli, args)
 
         assert result.exit_code == 6
@@ -535,7 +541,7 @@ class TestGetCmd:
                      '8ddfc8de-5164-5828-9fed-d0ed17edb489@2.1')
 
         from nebu.cli.main import cli
-        args = ['get', 'test-env', col_id, col_version]
+        args = ['get', '--max-workers=1', 'test-env', col_id, col_version]
         result = invoker(cli, args)
 
         assert result.exit_code == 0
@@ -565,7 +571,7 @@ class TestGetCmd:
         (tmpcwd / expected_output_dir).mkdir()
 
         from nebu.cli.main import cli
-        args = ['get', 'test-env', col_id, col_version]
+        args = ['get', '--max-workers=1', 'test-env', col_id, col_version]
         result = invoker(cli, args)
 
         assert result.exit_code == 3
@@ -576,7 +582,7 @@ class TestGetCmd:
         col_id = 'col00000'
 
         from nebu.cli.main import cli
-        args = ['get', 'test-env', col_id]
+        args = ['get', '--max-workers=1', 'test-env', col_id]
         result = invoker(cli, args)
 
         assert result.exit_code == 2
@@ -592,7 +598,7 @@ class TestGetCmd:
         requests_mock.get(content_url, status_code=404)
 
         from nebu.cli.main import cli
-        args = ['get', 'test-env', col_id, col_ver]
+        args = ['get', '--max-workers=1', 'test-env', col_id, col_ver]
         result = invoker(cli, args)
 
         assert result.exit_code == 4
@@ -624,7 +630,7 @@ class TestGetCmd:
         register_404(requests_mock, raw_url)
 
         from nebu.cli.main import cli
-        args = ['get', 'test-env', col_id, col_version]
+        args = ['get', '--max-workers=1', 'test-env', col_id, col_version]
         result = invoker(cli, args)
 
         assert result.exit_code == 4
@@ -670,7 +676,8 @@ class TestGetCmd:
         requests_mock.get(url, content=mod_ascii_encoded)
 
         # Call the target
-        _write_node(node, base_url, out_dir)
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            _write_node(node, base_url, out_dir, pool, [])
 
         """ Verify the sha1 is as expected """
         downloaded_hash = get_sha1s_dict(out_dir / legacy_id)["index.cnxml"]
