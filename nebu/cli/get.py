@@ -118,7 +118,7 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, with_resources):
     tree = col_metadata['tree']
     os.mkdir(str(output_dir))
 
-    num_pages = _count_leaves(tree) + 1  # Num. of xml files to fetch
+    num_pages = _count_nodes(tree) + 1  # Num. of xml files to fetch
     try:
         label = 'Getting {}'.format(output_dir.relative_to(Path.cwd()))
     except ValueError:
@@ -133,9 +133,9 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree, with_resources):
     duration = time.time() - start_time
     print("Fetch took {} seconds".format(duration))
 
-def _count_leaves(node):
+def _count_nodes(node):
     if 'contents' in node:
-        return sum([_count_leaves(childnode) for childnode in node['contents']])
+        return sum([_count_nodes(childnode) for childnode in node['contents']])
     else:
         return 1
 
@@ -220,7 +220,7 @@ def _write_node(node, base_url, out_dir, book_tree=False, with_resources=False,
     print("pbar: {}".format(pbar))
     print("depth: {}".format(depth))                      ## Depth is height of tree
     print("position: {}".format(position))                ## Used to reset the lowest book_level counter (pages) per chapter, i.e. position: {book: ##, chapter: ##, page: ##}
-    print("book_level: {}".format(book_level))                      ## Levels - 0: book, 1: unit , 2: chapter, 3: module/page, .... for A & P book col11496
+    print("book_level: {}".format(book_level))            ## Book Levels - 0: book, 1: unit , 2: chapter, 3: module/page, .... for A & P book col11496
     """ Remaining args are used for recursion """
 
     if depth is None:
