@@ -7,7 +7,7 @@ import requests
 
 from lxml import etree
 from pathlib import Path
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 
 from ..logger import logger
 from ._common import common_params, confirm, build_archive_url, calculate_sha1
@@ -181,6 +181,27 @@ def store_sha1(sha1, write_dir, filename):
         s.write('{}  {}\n'.format(sha1, filename))
 
 
+async def do_with_retry_request_while(session,
+                                      url,
+                                      condition,
+                                      max_retries,
+                                      do,
+                                      sleep_time=0.5):
+    retries = 0
+    while retries <= max_retries:
+        try:
+            async with session.get(
+                    url,
+                    timeout=ClientTimeout(total=15)) as response:
+                if not condition(response):
+                    return await do(response)
+        except asyncio.TimeoutError:  # pragma: no cover
+            pass
+        retries += 1
+        await asyncio.sleep(sleep_time)
+    raise Exception(f'Max retries exceeded: {url}')
+
+
 async def _write_contents(tree,
                           base_url,
                           out_dir,
@@ -193,11 +214,17 @@ async def _write_contents(tree,
                                       write_dir,
                                       index_in_group=0):
         async def get_metadata():
-            async with session.get(content_meta_url) as response:
-                resp = response
-                if not resp or resp.status >= 400:
+            async def response_json(response):
+                if response.status >= 400:
                     return None
-                return await resp.json()
+                return await response.json()
+
+            return await do_with_retry_request_while(
+                session=session,
+                url=content_meta_url,
+                condition=lambda resp: resp.status >= 500,
+                max_retries=4,
+                do=response_json)
 
         def get_resource_groups():
             def key_func(tup):
@@ -313,8 +340,14 @@ async def _write_contents(tree,
                                   write_dir,
                                   filename,
                                   resource_id):
-        async with session.get(resource_url) as response:
-            resp = await response.read()
+        async def read_response(response):
+            return await response.read()
+        resp = await do_with_retry_request_while(
+            session=session,
+            url=resource_url,
+            condition=lambda resp: resp.status >= 500,
+            max_retries=4,
+            do=read_response)
         filepath = write_dir / filename
         filepath.write_bytes(resp)
         store_sha1(resource_id, write_dir, filename)
@@ -324,8 +357,14 @@ async def _write_contents(tree,
                                  write_dir,
                                  filename,
                                  legacy_id):
-        async with session.get(content_url) as response:
-            resp = await response.read()
+        async def read_response(response):
+            return await response.read()
+        resp = await do_with_retry_request_while(
+            session=session,
+            url=content_url,
+            condition=lambda resp: resp.status >= 500,
+            max_retries=4,
+            do=read_response)
         filepath = write_dir / filename
         filepath.write_bytes(etree.tostring(etree.XML(resp),
                                             encoding='utf-8'))
