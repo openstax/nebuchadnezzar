@@ -1,6 +1,7 @@
 import asyncio
 from itertools import groupby
 from traceback import print_tb
+import sys
 
 import click
 import requests
@@ -139,9 +140,9 @@ def report_and_quit(loop, context):  # pragma: no cover
     loop.default_exception_handler(context)
 
     exception = context.get('exception')
+    print(type(exception), file=sys.stderr)
     print_tb(exception.__traceback__)
-    print(type(exception))
-    print(str(exception))
+    print(str(exception), file=sys.stderr)
     loop.stop()
 
 

@@ -792,8 +792,8 @@ class TestGetCmd:
             loop = asyncio.get_event_loop()
             coro = _write_contents(node, base_url, out_dir)
             loop.run_until_complete(coro)
-        except Exception:
-            assert 'Max retries exceeded' in capsys.readouterr().out
+        except RuntimeError:
+            assert 'Max retries exceeded' in capsys.readouterr().err
         else:
             assert False
 
