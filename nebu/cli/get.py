@@ -182,12 +182,12 @@ def store_sha1(sha1, write_dir, filename):
         s.write('{}  {}\n'.format(sha1, filename))
 
 
-async def do_with_retry_request_while(session,
-                                      url,
-                                      condition,
-                                      max_retries,
-                                      do,
-                                      sleep_time=0.5):
+async def do_with_retried_request_while(session,
+                                        url,
+                                        condition,
+                                        max_retries,
+                                        do,
+                                        sleep_time=0.5):
     retries = 0
     while retries <= max_retries:
         try:
@@ -216,14 +216,14 @@ async def _write_contents(tree,
                                       index_in_group=0):
         async def get_metadata():
             async def response_json(response):
-                if response.status >= 400:
-                    return None
+                if 500 > response.status >= 400:
+                    return {}
                 return await response.json()
 
-            return await do_with_retry_request_while(
+            return await do_with_retried_request_while(
                 session=session,
                 url=content_meta_url,
-                condition=lambda resp: resp.status >= 500,
+                condition=lambda resp: resp.status in (503, 504),
                 max_retries=4,
                 do=response_json)
 
@@ -343,10 +343,10 @@ async def _write_contents(tree,
                                   resource_id):
         async def read_response(response):
             return await response.read()
-        resp = await do_with_retry_request_while(
+        resp = await do_with_retried_request_while(
             session=session,
             url=resource_url,
-            condition=lambda resp: resp.status >= 500,
+            condition=lambda resp: resp.status in (503, 504),
             max_retries=4,
             do=read_response)
         filepath = write_dir / filename
@@ -360,10 +360,10 @@ async def _write_contents(tree,
                                  legacy_id):
         async def read_response(response):
             return await response.read()
-        resp = await do_with_retry_request_while(
+        resp = await do_with_retried_request_while(
             session=session,
             url=content_url,
-            condition=lambda resp: resp.status >= 500,
+            condition=lambda resp: resp.status in (503, 504),
             max_retries=4,
             do=read_response)
         filepath = write_dir / filename

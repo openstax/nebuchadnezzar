@@ -785,7 +785,7 @@ class TestGetCmd:
         mock_aioresponses.get(url,
                               repeat=True,
                               body='Internal Server Error',
-                              status=500)
+                              status=503)
 
         # Call the target
         try:
