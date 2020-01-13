@@ -231,8 +231,8 @@ async def _write_contents(tree,
             def key_func(tup):
                 return filename_to_resource_group(tup[0])
 
-            if metadata is None:
-                return None
+            if metadata == {}:
+                return {}
 
             by_filename = {res['filename']: res
                            for res in metadata['resources']}
@@ -243,13 +243,15 @@ async def _write_contents(tree,
             return by_resource_group
 
         def enqueue_content():
+            if 'content' not in resource_groups:
+                return
+
             content_id = resource_groups['content'][content_filename]['id']
             content_url = f'{base_url}/resources/{content_id}'
             content_coro = fetch_content_node(session,
                                               content_url,
                                               write_dir,
-                                              content_filename,
-                                              legacy_id)
+                                              content_filename)
             tasks.append(asyncio.ensure_future(content_coro))
 
         def enqueue_extras():
@@ -287,29 +289,17 @@ async def _write_contents(tree,
                                                              else index + 1))
                 tasks.append(asyncio.ensure_future(content_meta_coro))
 
-        def get_content_filename():
-            try:
-                return filename_by_type[metadata['mediaType']]
-            except (TypeError, KeyError):
-                return None
-
-        def get_legacy_id():
-            try:
-                return metadata['legacy_id']
-            except (TypeError, KeyError):
-                return None
-
         def get_scoped_directory():
             is_module = content_filename == 'index.cnxml'
             is_collection = content_filename == 'collection.xml'
 
-            node_title = node.get('title') or ''
+            node_title = node.get('title', '')
             index_string = ('{:02d} '.format(index_in_group)
                             if not is_collection
                             else '')
             tree_dirname = f'{index_string}{_safe_name(node_title)}'
 
-            if is_module and not book_tree:
+            if is_module and not book_tree and legacy_id is not None:
                 return legacy_id
             if book_tree:
                 return tree_dirname
@@ -319,16 +309,16 @@ async def _write_contents(tree,
         metadata = await get_metadata()
         resource_groups = get_resource_groups()
 
-        content_filename = get_content_filename()
-        legacy_id = get_legacy_id()
+        media_type = metadata.get('mediaType')
+        content_filename = filename_by_type.get(media_type)
+        legacy_id = metadata.get('legacy_id')
 
         scoped_directory = get_scoped_directory()
         write_dir = write_dir / scoped_directory
         write_dir.mkdir(parents=True, exist_ok=True)
 
-        if resource_groups is not None:
-            enqueue_content()
-            enqueue_extras()
+        enqueue_content()
+        enqueue_extras()
         enqueue_children()
 
         await asyncio.wait(tasks)
@@ -356,8 +346,7 @@ async def _write_contents(tree,
     async def fetch_content_node(session,
                                  content_url,
                                  write_dir,
-                                 filename,
-                                 legacy_id):
+                                 filename):
         async def read_response(response):
             return await response.read()
         resp = await do_with_retried_request_while(
