@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+9.5.1
+-----
+
+- Allow a limit to be specified to the number of concurrent requests made (default 8) (#173)
+
 9.5.0
 -----
 
