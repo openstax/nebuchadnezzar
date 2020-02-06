@@ -145,7 +145,7 @@ def get(ctx, env, col_id, col_version, output_dir, book_tree,
 
 
 def report_and_quit(loop, context):  # pragma: no cover
-    loop.default_exception_handler(context)
+    # loop.default_exception_handler(context)
 
     exception = context.get('exception')
     if exception is not None:

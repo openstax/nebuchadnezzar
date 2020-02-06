@@ -3,6 +3,7 @@ import zipfile
 from cgi import parse_multipart
 from requests.auth import HTTPBasicAuth
 
+import requests
 import pretend
 
 
@@ -807,3 +808,33 @@ class TestPublishCmd:
         #       the last line so we know we got to the correct place.
         # assert result.output == expected_output
         assert expected_output in result.output
+
+    def test_publish_connection_error(self, datadir,
+                                      monkeypatch, requests_mock, invoker):
+        mock_successful_ping('/auth-ping', requests_mock)
+        mock_successful_ping('/publish-ping', requests_mock)
+
+        id = 'collection'
+        publisher = 'CollegeStax'
+        message = 'mEssAgE'
+        monkeypatch.chdir(str(datadir / id))
+        monkeypatch.setenv('XXX_PUBLISHER', publisher)
+
+        # Mock a connection error on publish
+        url = 'https://cnx.org/api/publish-litezip'
+        requests_mock.register_uri('POST',
+                                   url,
+                                   exc=requests.exceptions.ConnectionError)
+
+        from nebu.cli.main import cli
+        # Use Current Working Directory (CWD)
+        args = ['publish', 'test-env', '.', '-m', message,
+                '--username', 'someusername', '--password', 'somepassword']
+        result = invoker(cli, args)
+
+        assert result.exit_code == 1
+
+        expected = f'Max retries exceeded: {url}'
+        print(result.output)
+        print(True if result.exception else False)
+        assert expected in result.output

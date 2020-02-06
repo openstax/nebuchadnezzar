@@ -170,9 +170,26 @@ def _publish(base_url, struct, message, username, password):
     files = {
         'file': ('contents.zip', zip_file.open('rb'),),
     }
-    # Send it!
-    resp = requests.post(url, data=data, files=files,
-                         auth=auth, headers=headers)
+
+    def retry_on_error(f, max_retries):
+        retries = 0
+        while True:
+            try:
+                return f()
+            except requests.exceptions.ConnectionError:
+                if retries == max_retries:
+                    raise
+                retries += 1
+
+    def send_request():
+        return requests.post(url, data=data, files=files,
+                             auth=auth, headers=headers)
+
+    try:
+        resp = retry_on_error(send_request, 4)
+    except requests.exceptions.ConnectionError:
+        logger.error(f'ERROR: Max retries exceeded: {url}')
+        return False
 
     # Clean up!
     zip_file.unlink()
