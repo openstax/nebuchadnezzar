@@ -74,6 +74,13 @@ def get_base_url(context, environ_name):
     try:
         return context.obj['settings']['environs'][environ_name]['url']
     except KeyError:
+        if '://' in environ_name:
+            # Assume name is fqdn with protocol
+            return environ_name
+        if '.' in environ_name:
+            # Assume name is fqdn sans protocol
+            return f'https://{environ_name}'
+        # Assume name is shortname for cnx host
         return f'https://{environ_name}.cnx.org'
 
 

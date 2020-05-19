@@ -63,9 +63,29 @@ class TestGetBaseUrl:
         resulting_url = get_base_url(ctx, env_name)
         assert resulting_url == url
 
-    def test_fallback(self):
+    def test_fallback_shortname(self):
         env_name = 'foo'
         url = 'https://foo.cnx.org'
+        settings = {
+            'settings': {'environs': {}},
+        }
+        ctx = pretend.stub(obj=settings)
+        resulting_url = get_base_url(ctx, env_name)
+        assert resulting_url == url
+
+    def test_fallback_fqdn(self):
+        env_name = 'foo.com'
+        url = 'https://foo.com'
+        settings = {
+            'settings': {'environs': {}},
+        }
+        ctx = pretend.stub(obj=settings)
+        resulting_url = get_base_url(ctx, env_name)
+        assert resulting_url == url
+
+    def test_fallback_fqdn_with_protocol(self):
+        env_name = 'http://insecure.foo.com'
+        url = 'http://insecure.foo.com'
         settings = {
             'settings': {'environs': {}},
         }
