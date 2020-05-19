@@ -5,7 +5,6 @@ import hashlib
 import click
 
 from ..logger import configure_logging, logger
-from .exceptions import UnknownEnvironment
 
 
 console_logging_config = {
@@ -75,7 +74,7 @@ def get_base_url(context, environ_name):
     try:
         return context.obj['settings']['environs'][environ_name]['url']
     except KeyError:
-        raise UnknownEnvironment(environ_name)
+        return f'https://{environ_name}.cnx.org'
 
 
 def build_archive_url(context, environ_name):

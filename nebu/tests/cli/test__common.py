@@ -6,7 +6,6 @@ import pytest
 
 from nebu.cli._common import common_params, confirm, get_base_url, \
     build_archive_url
-from nebu.cli.exceptions import UnknownEnvironment
 
 
 @pytest.fixture
@@ -64,16 +63,15 @@ class TestGetBaseUrl:
         resulting_url = get_base_url(ctx, env_name)
         assert resulting_url == url
 
-    def test_raises(self):
+    def test_fallback(self):
         env_name = 'foo'
+        url = 'https://foo.cnx.org'
         settings = {
             'settings': {'environs': {}},
         }
         ctx = pretend.stub(obj=settings)
-        with pytest.raises(UnknownEnvironment) as exc_info:
-            get_base_url(ctx, env_name)
-        message = exc_info.value.message
-        assert message == "unknown environment '{}'".format(env_name)
+        resulting_url = get_base_url(ctx, env_name)
+        assert resulting_url == url
 
 
 def test_build_archive_url():
