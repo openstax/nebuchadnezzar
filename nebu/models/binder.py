@@ -105,7 +105,7 @@ class Binder(BaseBinder):
                 version = elm.attrib[VERSION_ATTRIB_NAME]
                 current_node = document_factory(id, version)
                 parent_node.append(current_node)
-        
+
         def recurse(node):
             handler('start', node)
             for child in node:
