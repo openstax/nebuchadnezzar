@@ -22,6 +22,7 @@ from .utils import (
 COLLECTION_ID_TAG = '{http://cnx.rice.edu/mdml}content-id'
 COLLECTION_TAG = '{http://cnx.rice.edu/collxml}collection'
 SUBCOLLECTION_TAG = '{http://cnx.rice.edu/collxml}subcollection'
+CONTENT_TAG = '{http://cnx.rice.edu/collxml}content'
 MODULE_TAG = '{http://cnx.rice.edu/collxml}module'
 TITLE_TAG = '{http://cnx.rice.edu/mdml}title'
 COLLXML_TOPIC_TAGS = (
@@ -75,43 +76,44 @@ class Binder(BaseBinder):
         binder = cls(id, metadata=metadata)
         Binder._update_metadata(filepath, binder)
 
-        # Load the binder using the collection tree
-        with filepath.open('rb') as fb:
-            elm_iterparser = etree.iterparse(
-                fb,
-                events=('start', 'end'),
-                tag=COLLXML_TOPIC_TAGS,
-                remove_blank_text=True,
-            )
+        def get_content_node_of_collection(node):
+            return next(filter(lambda elem: elem.tag == CONTENT_TAG, node))
 
-            parent_node = current_node = binder
-            chain = [binder]
-            for event, elm in elm_iterparser:
-                if elm.tag == TITLE_TAG and event == 'start':
-                    title = elm.text
-                    if isinstance(current_node, DOC_TYPES):
-                        parent_node.set_title_for_node(
-                            current_node,
-                            title,
-                        )
-                        if isinstance(current_node, DocumentPointer):
-                            current_node.metadata['title'] = title
-                    else:
-                        current_node.metadata['title'] = title
-                elif elm.tag == SUBCOLLECTION_TAG:
-                    if event == 'start':
-                        current_node = TranslucentBinder()
-                        parent_node.append(current_node)
-                        parent_node = current_node
-                        chain.append(parent_node)
-                    else:
-                        chain.pop()
-                        parent_node = chain[-1]
-                elif elm.tag == MODULE_TAG and event == 'start':
-                    id = elm.attrib['document']
-                    version = elm.attrib[VERSION_ATTRIB_NAME]
-                    current_node = document_factory(id, version)
-                    parent_node.append(current_node)
+        def process_element(context_model_node, model_node, xml_node):
+            if xml_node.tag == TITLE_TAG:
+                title = xml_node.text
+                if isinstance(model_node, DOC_TYPES):
+                    context_model_node.set_title_for_node(
+                        model_node,
+                        title,
+                    )
+                    if isinstance(model_node, DocumentPointer):
+                        model_node.metadata['title'] = title
+                else:
+                    model_node.metadata['title'] = title
+            elif xml_node.tag == SUBCOLLECTION_TAG:
+                new_binder = TranslucentBinder()
+                model_node.append(new_binder)
+                for child in xml_node:
+                    # New context
+                    process_element(new_binder, new_binder, child)
+            elif xml_node.tag == MODULE_TAG:
+                id = xml_node.attrib['document']
+                version = xml_node.attrib[VERSION_ATTRIB_NAME]
+                new_model = document_factory(id, version)
+                model_node.append(new_model)
+                for child in xml_node:
+                    # Context doesn't change
+                    process_element(model_node, new_model, child)
+            elif xml_node.tag == CONTENT_TAG:
+                for child in xml_node:
+                    # Context doesn't change
+                    process_element(model_node, model_node, child)
+
+        coll_content = get_content_node_of_collection(xml.getroot())
+        # Root context
+        process_element(binder, binder, coll_content)
+
         return binder
 
     @staticmethod
