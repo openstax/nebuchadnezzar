@@ -77,16 +77,14 @@ class Binder(BaseBinder):
 
         # Load the binder using the collection tree
         with filepath.open('rb') as fb:
-            elm_iterparser = etree.iterparse(
-                fb,
-                events=('start', 'end'),
-                tag=COLLXML_TOPIC_TAGS,
-                remove_blank_text=True,
-            )
-
             parent_node = current_node = binder
             chain = [binder]
-            for event, elm in elm_iterparser:
+            
+            # Use a handler instead of iterparse because lxml has a bug 
+            # where the buffer size causes text elements to drop
+            def handler(event, elm):
+                nonlocal parent_node
+                nonlocal current_node
                 if elm.tag == TITLE_TAG and event == 'start':
                     title = elm.text
                     if isinstance(current_node, DOC_TYPES):
@@ -112,6 +110,16 @@ class Binder(BaseBinder):
                     version = elm.attrib[VERSION_ATTRIB_NAME]
                     current_node = document_factory(id, version)
                     parent_node.append(current_node)
+            
+            def recurse(h, node):
+                h('start', node)
+                for c in node:
+                    recurse(h, c)
+                h('end', node)
+
+            doc = etree.parse(fb, etree.XMLParser())
+            recurse(handler, doc.getroot())
+
         return binder
 
     @staticmethod
