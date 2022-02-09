@@ -52,7 +52,7 @@ M46882_GIT_METADATA = {
     'illustrators': [],
     'keywords': (),
     'language': None,
-    'license_text': None,
+    'license_text': 'Creative Commons Attribution License (ASSUMED)',
     'license_url': None,
     'print_style': None,
     'publishers': [],
