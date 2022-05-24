@@ -366,7 +366,7 @@ async def _write_contents(tree,
             if 'contents' not in node:
                 return
 
-            no_bump_index = is_preface(node['contents'][0])
+            no_bump_index = len(node['contents'])>0 and is_preface(node['contents'][0])
             for index, child in enumerate(node['contents']):
                 content_meta_url = f'{base_url}/contents/{child["id"]}'
                 content_meta_coro = fetch_content_meta_node(session,
@@ -413,7 +413,8 @@ async def _write_contents(tree,
         enqueue_extras()
         enqueue_children()
 
-        await asyncio.wait(tasks)
+        if len(tasks)>0:
+            await asyncio.wait(tasks)
 
         if pbar is not None:
             pbar.update(1)
