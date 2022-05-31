@@ -233,7 +233,7 @@ def report_and_quit(loop, context):  # pragma: no cover
 
 
 def _count_nodes(node):
-    if 'contents' in node:
+    if node and 'contents' in node:
         return sum([_count_nodes(child) for child in node['contents']]) + 1
     else:
         return 1
