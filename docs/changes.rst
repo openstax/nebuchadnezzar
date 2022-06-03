@@ -2,6 +2,10 @@
 Change Log
 ==========
 
+9.16.0
+
+- Fix strong tags being given the data-type=bold attribute
+
 9.15.0
 
 - Ensure all IDs are unique and remove randomly-generated IDs
