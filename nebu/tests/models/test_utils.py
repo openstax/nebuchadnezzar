@@ -193,10 +193,11 @@ class TestScanForIdMapping(object):
             '04 Lab 3-1 Basic MSP430 Assembly from Roots in LC-3': Path(
                 '04 Lab 3-1 Basic MSP430 Assembly from Roots in LC-3/'
                 'index.cnxml'),
-            '01 MSP430 LaunchPad Test Circuit Breadboarding Instructions': Path(
-                '10 Helpful General Information/'
-                '01 MSP430 LaunchPad Test Circuit Breadboarding Instructions/'
-                'index.cnxml'),
+            '01 MSP430 LaunchPad Test Circuit Breadboarding Instructions':
+                Path('10 Helpful General Information/'
+                     '01 MSP430 LaunchPad Test Circuit Breadboarding ' +
+                     'Instructions/'
+                     'index.cnxml'),
             '02 A Student to Student Intro to IDE Programming and CCS4': Path(
                 '10 Helpful General Information/'
                 '02 A Student to Student Intro to IDE '
@@ -204,20 +205,21 @@ class TestScanForIdMapping(object):
             '06 Lab 4-1 Interrupt Driven Programming in MSP430 Assembly': Path(
                 '06 Lab 4-1 Interrupt Driven Programming in MSP430 Assembly/'
                 'index.cnxml'),
-            '08 Lab 5-1 C Language Programming through the ADC and the MSP430': Path(
-                '08 Lab 5-1 C Language Programming through the ADC '
-                'and the MSP430/index.cnxml'),
+            '08 Lab 5-1 C Language Programming through the ADC and the MSP430':
+                Path('08 Lab 5-1 C Language Programming through the ADC '
+                     'and the MSP430/index.cnxml'),
             '05 Lab 3-2 Digital Input and Output with the MSP430': Path(
                 '05 Lab 3-2 Digital Input and Output with the MSP430/'
                 'index.cnxml'),
             '07 Lab 4-2 Putting It All Together': Path(
                 '07 Lab 4-2 Putting It All Together/index.cnxml'),
-            '09 Lab 5-2 Using C and the ADC for "Real World" Applications with the MSP430': Path(
+            '09 Lab 5-2 Using C and the ADC for "Real World" Applications ' +
+                'with the MSP430': Path(
                 '09 Lab 5-2 Using C and the ADC for "Real World" '
                 'Applications with the MSP430/index.cnxml'),
-            '02 A Quartus Project from Start to Finish∶ 2 Bit Mux Tutorial': Path(
-                '02 A Quartus Project from Start to Finish∶ '
-                '2 Bit Mux Tutorial/index.cnxml'),
+            '02 A Quartus Project from Start to Finish∶ 2 Bit Mux Tutorial':
+                Path('02 A Quartus Project from Start to Finish∶ '
+                     '2 Bit Mux Tutorial/index.cnxml'),
             '01 Introduction to Quartus and Circuit Diagram Design': Path(
                 '01 Introduction to Quartus and Circuit Diagram Design/'
                 'index.cnxml'),
