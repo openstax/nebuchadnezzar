@@ -14,9 +14,8 @@ from io import BytesIO
 from lxml import etree
 
 __all__ = (
-    'DEFAULT_XMLPARSER', 'ensure_bytes',
-    'cnxml_abstract_to_html',
-    'cnxml_to_html', 'cnxml_to_full_html',
+    'DEFAULT_XMLPARSER', 'ensure_bytes', 'cnxml_abstract_to_html',
+    'cnxml_to_html', 'cnxml_to_full_html', 'etree_cnxml_to_full_html'
 )
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -85,12 +84,24 @@ def cnxml_to_html(cnxml, xml_parser=DEFAULT_XMLPARSER):
     return str(content)
 
 
+# FIXME: Remove
 def cnxml_to_full_html(cnxml, xml_parser=DEFAULT_XMLPARSER):
     """Transform raw cnxml content to a full html."""
     assert not isinstance(cnxml, (etree._ElementTree, etree._Element,))
 
     cnxml = etree.parse(BytesIO(ensure_bytes(cnxml)), xml_parser)
 
+    # Transform the content to html.
+    content = cnxml_to_html(cnxml)
+    # Transform the metadata to html.
+    metadata = _transform_cnxml_to_html_metadata(cnxml)
+
+    html = HTML_TEMPLATE_FOR_CNXML.format(metadata=metadata, content=content)
+    return html
+
+
+def etree_cnxml_to_full_html(cnxml):
+    """Transform raw cnxml content to a full html."""
     # Transform the content to html.
     content = cnxml_to_html(cnxml)
     # Transform the metadata to html.

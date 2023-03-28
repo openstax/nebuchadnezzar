@@ -10,6 +10,21 @@ DATA_DIR = here / 'data'
 CONFIG_FILEPATH = here / 'config.ini'
 
 
+@pytest.fixture
+def git_collection_data(datadir):
+    """This data reflects what is expected from git storage"""
+    return datadir / 'collection_for_git_workflow'
+
+
+@pytest.fixture
+def parts_tuple(git_collection_data):
+    from nebu.models.book_part import BookPart
+    collection, docs_by_id, docs_by_uuid = BookPart.from_collection_xml(
+        git_collection_data / "collection.xml"
+    )
+    return (collection, docs_by_id, docs_by_uuid)
+
+
 @pytest.fixture(autouse=True)
 def monekypatch_config(monkeypatch):
     """Point at the testing configuration file"""

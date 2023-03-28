@@ -22,6 +22,42 @@ HTML_DOCUMENT_NAMESPACES = {
 }
 
 
+def fix_namespaces(root):
+    # Get rid of unused namespaces and put them all in the root tag
+    nsmap = {
+        None: "http://www.w3.org/1999/xhtml",
+        "m": "http://www.w3.org/1998/Math/MathML",
+        "epub": "http://www.idpf.org/2007/ops",
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "dc": "http://purl.org/dc/elements/1.1/",
+        "lrmi": "http://lrmi.net/the-specification",
+        "bib": "http://bibtexml.sf.net/",
+        "data": "http://www.w3.org/TR/html5/dom.html#custom-data-attribute",
+        "qml": "http://cnx.rice.edu/qml/1.0",
+        "datadev": "http://dev.w3.org/html5/spec/#custom",
+        "mod": "http://cnx.rice.edu/#moduleIds",
+        "md": "http://cnx.rice.edu/mdml",
+        "c": "http://cnx.rice.edu/cnxml",
+    }
+
+    # lxml has a built in function to do this without destroying comments
+    etree.cleanup_namespaces(root, top_nsmap=nsmap)
+
+    return etree.tostring(root, pretty_print=True, encoding="utf-8")
+
+
+def open_xml(p):
+    return etree.parse(p, None)
+
+
+def xpath_html(elem, path):
+    return elem.xpath(path, namespaces=HTML_DOCUMENT_NAMESPACES)
+
+
+def etree_from_str(s, parser=None):
+    return etree.fromstring(s, parser)
+
+
 def squash_xml_to_text(elm, remove_namespaces=False):
     """Squash the given XML element (as `elm`) to a text containing XML.
     The outer most element/tag will be removed, but inner elements will
