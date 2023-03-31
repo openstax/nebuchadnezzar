@@ -4,8 +4,8 @@ from nebu.models.book_part import BookPart
 from nebu.xml_utils import etree_to_str
 
 
-def test_from_collection_xml(snapshot, git_collection_data):
-    collection, docs_by_id, docs_by_uuid = BookPart.from_collection_xml(
+def test_collection_from_file(snapshot, git_collection_data):
+    collection, docs_by_id, docs_by_uuid = BookPart.collection_from_file(
         git_collection_data / "collection.xml"
     )
 

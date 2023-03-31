@@ -8,6 +8,7 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from copy import copy
+from functools import lru_cache
 
 import jinja2
 import lxml.html
@@ -72,9 +73,16 @@ def update_ids(document):
             a.attrib["href"] = "#{}".format(old_id_to_new_id[href[1:]])
 
 
-def resolve_module_links(document, docs_by_id):
+@lru_cache(maxsize=None)
+def _get_external_document(input_dir, module_id):
+    from .models.book_part import BookPart
+
+    return BookPart.doc_from_file(input_dir, module_id)
+
+
+def resolve_module_links(document, docs_by_id, input_dir):
     """Resolve module links
-    <a href="/contents/{MODULE_ID} (and maybe fragment?)"> (other-book link)
+    <a href="/contents/{PAGE_ID} (and maybe fragment?)"> (other-book link)
     <a href="#page_{PAGE_ID}"> (same-book link)
     <a href="#auto_{PAGE_ID}_{TARGET_ID}"> (element on a page)
     """
@@ -97,7 +105,9 @@ def resolve_module_links(document, docs_by_id):
         if target_document is not None:
             new_href = fmt_str.format(target_document.metadata["uuid"])
         else:
-            new_href = f"/contents{href}"
+            target_document = _get_external_document(input_dir, module_id)
+            uuid = target_document.metadata["uuid"]
+            new_href = f"/contents{href.replace(module_id, uuid)}"
         link.set("href", new_href)
 
 

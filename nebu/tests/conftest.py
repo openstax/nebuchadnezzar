@@ -19,7 +19,7 @@ def git_collection_data(datadir):
 @pytest.fixture
 def parts_tuple(git_collection_data):
     from nebu.models.book_part import BookPart
-    collection, docs_by_id, docs_by_uuid = BookPart.from_collection_xml(
+    collection, docs_by_id, docs_by_uuid = BookPart.collection_from_file(
         git_collection_data / "collection.xml"
     )
     return (collection, docs_by_id, docs_by_uuid)

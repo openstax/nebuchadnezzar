@@ -40,7 +40,7 @@ def create_exercise_factories(exercise_host, token):
 
 
 def collection_to_assembled_xhtml(
-    collection, docs_by_id, docs_by_uuid, token, exercise_host
+    collection, docs_by_id, docs_by_uuid, input_dir, token, exercise_host
 ):
     page_uuids = list(docs_by_uuid.keys())
     includes = create_exercise_factories(exercise_host, token)
@@ -49,7 +49,7 @@ def collection_to_assembled_xhtml(
         # Step 1: Fetch any includes from remote sources
         fetch_insert_includes(document, page_uuids, includes)
         # Step 2: Rewrite module links
-        resolve_module_links(document, docs_by_id)
+        resolve_module_links(document, docs_by_id, input_dir)
         # Step 3: Update ids and links
         update_ids(document)
 
@@ -94,11 +94,16 @@ def assemble(ctx, input_dir, output_dir, exercise_token, exercise_host):
     if not output_dir.exists():
         output_dir.mkdir()
 
-    collection, docs_by_id, docs_by_uuid = BookPart.from_collection_xml(
+    collection, docs_by_id, docs_by_uuid = BookPart.collection_from_file(
         input_dir / "collection.xml"
     )
     assembled_xhtml = collection_to_assembled_xhtml(
-        collection, docs_by_id, docs_by_uuid, exercise_token, exercise_host
+        collection,
+        docs_by_id,
+        docs_by_uuid,
+        input_dir,
+        exercise_token,
+        exercise_host,
     )
     output_assembled_xhtml.write_bytes(assembled_xhtml)
 

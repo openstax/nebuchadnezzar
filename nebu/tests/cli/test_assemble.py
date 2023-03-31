@@ -233,12 +233,17 @@ def current_snapshot_dir(snapshot_dir):
 
 
 @pytest.fixture
-def assembled_pair(parts_tuple, exercise_mock):
+def assembled_pair(parts_tuple, exercise_mock, git_collection_data):
     from nebu.cli.assemble import collection_to_assembled_xhtml
 
     collection, docs_by_id, docs_by_uuid = parts_tuple
     assembled_collection = collection_to_assembled_xhtml(
-        collection, docs_by_id, docs_by_uuid, None, "exercises.openstax.org"
+        collection,
+        docs_by_id,
+        docs_by_uuid,
+        git_collection_data,
+        None,
+        "exercises.openstax.org"
     )
     return (collection, assembled_collection)
 

@@ -2,7 +2,7 @@
 It can be useful to compare how the content changes throughout assemble. These two directories represent the converted content at the beginning (raw) and end (assembled) for the assembly process.
 
 ## More details about assemble
-* [BookPart.from_collection_xml](../../models/book_part.py) for details about how the tree is created.
+* [BookPart.collection_from_file](../../models/book_part.py) for details about how the tree is created.
 * [assemble.collection_to_assembled_xhtml](../../cli/assemble.py) for details about how the collection xhtml is mutated during assembly.
 
 ## Raw, created by test_formatters.py, is what the xhtml looks like BEFORE
