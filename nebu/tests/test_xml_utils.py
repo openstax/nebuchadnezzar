@@ -118,7 +118,6 @@ class TestSquashXMLToText(unittest.TestCase):
 
 def test_fixnamespaces(snapshot):
     from nebu.xml_utils import fix_namespaces, etree_from_str
-    from lxml import etree
 
     before = etree_from_str(
         """\

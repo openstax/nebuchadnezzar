@@ -72,7 +72,12 @@ def update_ids(document):
             a.attrib["href"] = "#{}".format(old_id_to_new_id[href[1:]])
 
 
-def resolve_internal_links(document, docs_by_id):
+def resolve_module_links(document, docs_by_id):
+    """Resolve module links
+    <a href="/contents/{MODULE_ID} (and maybe fragment?)"> (other-book link)
+    <a href="#page_{PAGE_ID}"> (same-book link)
+    <a href="#auto_{PAGE_ID}_{TARGET_ID}"> (element on a page)
+    """
     for link in document.content.xpath("//*[@href]"):
         href = link.get("href")
         if href is None or len(href) == 0:  # pragma: no cover
@@ -83,13 +88,16 @@ def resolve_internal_links(document, docs_by_id):
         fragment_idx = href.find("#")
         if fragment_idx != -1:
             module_id = href[1:fragment_idx]
-            page_uuid = docs_by_id[module_id].metadata["uuid"]
             fragment = href[fragment_idx:].replace("#", "_")
-            new_href = f"#auto_{page_uuid}{fragment}"
+            fmt_str = f"#auto_{{}}{fragment}"
         else:
             module_id = href[1:]
-            page_uuid = docs_by_id[module_id].metadata["uuid"]
-            new_href = f"#page_{page_uuid}"
+            fmt_str = "#page_{}"
+        target_document = docs_by_id.get(module_id, None)
+        if target_document is not None:
+            new_href = fmt_str.format(target_document.metadata["uuid"])
+        else:
+            new_href = f"/contents{href}"
         link.set("href", new_href)
 
 
@@ -306,7 +314,7 @@ def exercise_callback_factory(match, url_template, token=None):
         exercise["items"][0]["required_context"]["ref"] = target_ref
 
     def _replace_exercises(elem, page_uuids):
-        item_code = elem.get("href")[len(match) :]
+        item_code = elem.get("href")[len(match):]
         url = url_template.format(itemCode=item_code)
         exercise_class = elem.get("class")
         if token:

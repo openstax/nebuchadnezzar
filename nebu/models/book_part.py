@@ -99,8 +99,10 @@ class BookPart:
         def handler(event, elm):
             nonlocal parent_part, current_part, parent_stack
             if elm.tag == TITLE_TAG and event == "start":
-                # This is only used to set titles for subcols
                 title = elm.text
+                assert (
+                    not current_part.is_doc
+                ), "Document pointers are not longer supported"
                 current_part.metadata["title"] = title
             elif elm.tag == SUBCOLLECTION_TAG:
                 if event == "start":

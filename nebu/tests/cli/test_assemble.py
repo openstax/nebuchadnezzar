@@ -1,4 +1,3 @@
-from pathlib import Path
 import json
 
 from lxml import etree
@@ -228,15 +227,49 @@ class TestAssembleIntegration:
         assert "To gain scientific knowledge" in html
 
 
-def test_assemble_collection_to_assembled_xhtml(
-    snapshot, parts_tuple, exercise_mock
-):
+@pytest.fixture
+def current_snapshot_dir(snapshot_dir):
+    return snapshot_dir / "assembled"
+
+
+@pytest.fixture
+def assembled_pair(parts_tuple, exercise_mock):
     from nebu.cli.assemble import collection_to_assembled_xhtml
 
     collection, docs_by_id, docs_by_uuid = parts_tuple
     assembled_collection = collection_to_assembled_xhtml(
         collection, docs_by_id, docs_by_uuid, None, "exercises.openstax.org"
     )
-    snapshot.assert_match(
-        assembled_collection.decode(), "assembled.collection.xhtml"
+    return (collection, assembled_collection)
+
+
+# Check documents, cols, etc. after all mutations were applied
+def test_doc_to_html(assert_match, assembled_pair):
+    from nebu.formatters import _doc_to_html
+
+    collection, _ = assembled_pair
+
+    docs_by_id = {doc.metadata["id"]: doc for doc in collection.documents}
+
+    for doc_id, document in docs_by_id.items():
+        assert_match(_doc_to_html(document), doc_id + ".xhtml")
+
+
+def test_col_to_html(assert_match, assembled_pair):
+    from nebu.models.book_part import PartType
+    from nebu.formatters import _col_to_html
+
+    collection, _ = assembled_pair
+
+    assert_match(_col_to_html(collection), "collection.xhtml")
+    for i, subcol in enumerate(collection.get_parts_by_type(PartType.SUBCOL)):
+        assert_match(_col_to_html(subcol), f"subcol-{i}.xhtml")
+
+
+def test_assemble_collection(
+    assert_match, assembled_pair
+):
+    _, assembled_collection = assembled_pair
+    assert_match(
+        assembled_collection.decode(), "collection.assembled.xhtml"
     )

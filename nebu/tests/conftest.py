@@ -38,6 +38,30 @@ def datadir():
 
 
 @pytest.fixture
+def snapshot_dir():
+    return here / "snapshots"
+
+
+# You can override this in tests
+@pytest.fixture
+def current_snapshot_dir(snapshot_dir):
+    return snapshot_dir
+
+
+@pytest.fixture
+def assert_match(snapshot, current_snapshot_dir):
+    # emulate the way pytest_snapshot auto names snapshot directories
+    # with increased control of the parent directory via current_snapshot_dir
+    def _assert_match(value, name):
+        import inspect
+        frames = inspect.getouterframes(inspect.currentframe())
+        func_name = frames[1].function
+        snapshot.snapshot_dir = current_snapshot_dir / func_name
+        snapshot.assert_match(value, name)
+    return _assert_match
+
+
+@pytest.fixture
 def invoker():
     """Provides a callable for testing a click enabled function using
     the click.testing.CliRunner

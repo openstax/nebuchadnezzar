@@ -18,30 +18,26 @@
     <col:param name="print-style" value="statistics"/>
   </col:parameters>
   <col:content>
-    <col:module document="m46909">
-      <md:title>Preface</md:title>
-    </col:module>
+    <col:module document="m46909"/>
     <col:subcollection>
       <md:title>Sampling and Data</md:title>
       <col:content>
-        <col:module document="m46913">
-          <md:title>Introduction</md:title>
-        </col:module>
-        <col:module document="m46909">
-          <md:title>Definitions of Statistics, Probability, and Key Terms</md:title>
-        </col:module>
+        <col:subcollection>
+          <md:title>A subcol nested inside another</md:title>
+          <col:content>
+            <col:module document="m46857"/>
+          </col:content>
+        </col:subcollection>
+        <col:module document="m46913"/>
+        <col:module document="m46909"/>
       </col:content>
     </col:subcollection>
     <col:subcollection>
       <md:title>Descriptive Statistics</md:title>
       <col:content>
-        <col:module document="m46882">
-          <md:title>Frequency, Frequency Tables, and Levels of Measurement</md:title>
-        </col:module>
+        <col:module document="m46882"/>
       </col:content>
     </col:subcollection>
-    <col:module document="m46882">
-      <md:title>Review Exercises (Ch 3-13)</md:title>
-    </col:module>
+    <col:module document="m46882"/>
   </col:content>
 </col:collection>

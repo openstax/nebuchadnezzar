@@ -1,7 +1,7 @@
 import json
 
 from nebu.models.book_part import BookPart
-from lxml import etree
+from nebu.xml_utils import etree_to_str
 
 
 def test_from_collection_xml(snapshot, git_collection_data):
@@ -19,9 +19,7 @@ def test_from_collection_xml(snapshot, git_collection_data):
             content=(
                 None
                 if book_part.content is None
-                else etree.tostring(
-                    book_part.content, pretty_print=True, encoding="utf-8"
-                ).decode()
+                else etree_to_str(book_part.content).decode()
             ),
         )
 

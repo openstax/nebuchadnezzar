@@ -6,7 +6,7 @@ from ._common import common_params
 from ..models.book_part import BookPart
 from ..formatters import (
     fetch_insert_includes,
-    resolve_internal_links,
+    resolve_module_links,
     update_ids,
     assemble_collection,
     exercise_callback_factory,
@@ -48,8 +48,8 @@ def collection_to_assembled_xhtml(
     for document in docs_by_uuid.values():
         # Step 1: Fetch any includes from remote sources
         fetch_insert_includes(document, page_uuids, includes)
-        # Step 2: Rewrite absolute-path links that are intra-collection
-        resolve_internal_links(document, docs_by_id)
+        # Step 2: Rewrite module links
+        resolve_module_links(document, docs_by_id)
         # Step 3: Update ids and links
         update_ids(document)
 

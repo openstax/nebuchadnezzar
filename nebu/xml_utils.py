@@ -43,7 +43,7 @@ def fix_namespaces(root):
     # lxml has a built in function to do this without destroying comments
     etree.cleanup_namespaces(root, top_nsmap=nsmap)
 
-    return etree.tostring(root, pretty_print=True, encoding="utf-8")
+    return etree_to_str(root)
 
 
 def open_xml(p):
@@ -56,6 +56,10 @@ def xpath_html(elem, path):
 
 def etree_from_str(s, parser=None):
     return etree.fromstring(s, parser)
+
+
+def etree_to_str(root, pretty_print=True, encoding="utf-8"):
+    return etree.tostring(root, pretty_print=pretty_print, encoding=encoding)
 
 
 def squash_xml_to_text(elm, remove_namespaces=False):
