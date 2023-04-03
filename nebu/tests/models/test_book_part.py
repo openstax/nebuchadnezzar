@@ -1,10 +1,16 @@
 import json
 
+import pytest
 from nebu.models.book_part import BookPart
 from nebu.xml_utils import etree_to_str
 
 
-def test_collection_from_file(snapshot, git_collection_data):
+@pytest.fixture
+def current_snapshot_dir(snapshot_dir):
+    return snapshot_dir / "test_book_part"
+
+
+def test_collection_from_file(assert_match, git_collection_data):
     collection, docs_by_id, docs_by_uuid = BookPart.collection_from_file(
         git_collection_data / "collection.xml"
     )
@@ -24,7 +30,7 @@ def test_collection_from_file(snapshot, git_collection_data):
         )
 
     collection_as_dict = part_to_dict(collection)
-    snapshot.assert_match(
+    assert_match(
         json.dumps(collection_as_dict, default=str, indent=2),
         "collection.json",
     )
