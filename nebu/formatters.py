@@ -87,10 +87,8 @@ def resolve_module_links(document, docs_by_id, input_dir):
     <a href="#auto_{PAGE_ID}_{TARGET_ID}"> (element on a page)
     """
     for link in document.content.xpath("//*[@href]"):
-        href = link.get("href")
-        if href is None or len(href) == 0:  # pragma: no cover
-            id_from_metadata = document.metadata["id"]
-            raise Exception(f"Empty link in {id_from_metadata}")
+        href = link.get("href", "").strip()
+        assert len(href) > 0, f"Empty link in \"{document.metadata['id']}\""
         if not href.startswith("/m"):  # pragma: no cover
             continue
         fragment_idx = href.find("#")
@@ -174,7 +172,7 @@ def _get_node_type(book_part, parent=None):
     elif book_part.is_col and parent is None:
         return "book"
     elif any(child.is_subcol for child in book_part.children):
-        return "unit"  # pragma: no cover
+        return "unit"
     else:
         return "chapter"
 
