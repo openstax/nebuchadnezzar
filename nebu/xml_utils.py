@@ -12,7 +12,8 @@ from lxml import etree
 
 __all__ = (
     'squash_xml_to_text',
-    'HTML_DOCUMENT_NAMESPACES'
+    'HTML_DOCUMENT_NAMESPACES',
+    'DEFAULT_XMLPARSER',
 )
 
 
@@ -20,6 +21,14 @@ HTML_DOCUMENT_NAMESPACES = {
     'xhtml': "http://www.w3.org/1999/xhtml",
     'epub': "http://www.idpf.org/2007/ops",
 }
+
+XML_PARSER_OPTIONS = {
+    'load_dtd': True,
+    'resolve_entities': True,
+    'no_network': False,   # don't force loading our cnxml/DTD packages
+    'attribute_defaults': False,
+}
+DEFAULT_XMLPARSER = etree.XMLParser(**XML_PARSER_OPTIONS)
 
 
 def fix_namespaces(root):
@@ -46,15 +55,15 @@ def fix_namespaces(root):
     return etree_to_str(root)
 
 
-def open_xml(p):
-    return etree.parse(p, None)
+def open_xml(p, parser=DEFAULT_XMLPARSER):
+    return etree.parse(p, parser)
 
 
 def xpath_html(elem, path):
     return elem.xpath(path, namespaces=HTML_DOCUMENT_NAMESPACES)
 
 
-def etree_from_str(s, parser=None):
+def etree_from_str(s, parser=DEFAULT_XMLPARSER):
     return etree.fromstring(s, parser)
 
 
