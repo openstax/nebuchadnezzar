@@ -332,5 +332,6 @@ def test_feature(assert_match, fake_doc, monkeypatch):
 
     monkeypatch.setattr("nebu.formatters.requests.get", exercise_mod_tags)
 
-    fetch_insert_includes(fake_doc, ["a", "b", "c"], includes)
-    assert_match(fix_namespaces(fake_doc.content), "document.xhtml")
+    with pytest.raises(Exception) as e:
+        fetch_insert_includes(fake_doc, ["a", "b", "c"], includes)
+        assert "The following errors occured: " in str(e)

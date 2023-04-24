@@ -6,7 +6,6 @@
 # See LICENCE.txt for details.
 # ###
 import logging
-from concurrent.futures import ThreadPoolExecutor
 from copy import copy
 from functools import lru_cache
 
@@ -42,11 +41,23 @@ def etree_to_content(etree_, strip_root_node=False):
 def fetch_insert_includes(
     document, page_uuids, includes, threads=20
 ):
+    import asyncio
+    from .async_job_queue import AsyncJobQueue
 
-    for match, proc in includes:
-        with ThreadPoolExecutor(max_workers=threads) as e:
-            for elem in xpath_html(document.content, match):
-                e.submit(proc, elem, page_uuids)
+    async def async_exercise_fetching():
+        loop = asyncio.get_running_loop()
+        for match, proc in includes:
+            job_queue = AsyncJobQueue(threads)
+            async with job_queue as q:
+                for elem in xpath_html(document.content, match):
+                    q.put_nowait(loop.run_in_executor(None, proc, elem, page_uuids))
+            if job_queue.errors:
+                raise Exception(
+                    "The following errors occurred: " +
+                    ", ".join(str(e) for e in job_queue.errors)
+                )
+    
+    asyncio.run(async_exercise_fetching())
 
 
 def update_ids(document):
