@@ -1,5 +1,6 @@
 import json
 from copy import copy
+import re
 
 import pytest
 from nebu.formatters import exercise_callback_factory, fetch_insert_includes
@@ -322,7 +323,7 @@ def test_feature(assert_match, fake_doc, monkeypatch):
         mod_tags = copy(EXERCISE_JSON_HTML)
         mod_tags["items"][0]["tags"] = [
             "context-cnxfeature:i-made-this-up",  # if maybe_feature is None
-            "context-cnxmod:a"  # target_module = candidate_uuids.pop()
+            "context-cnxmod:a",  # target_module = candidate_uuids.pop()
         ]
         return MockResponse(mod_tags, 200)
 
@@ -334,4 +335,4 @@ def test_feature(assert_match, fake_doc, monkeypatch):
 
     with pytest.raises(Exception) as e:
         fetch_insert_includes(fake_doc, ["a", "b", "c"], includes)
-        assert "The following errors occured: " in str(e)
+        assert len(re.findall(r"Feature .+? not in .+? href=.+?", str(e))) == 4

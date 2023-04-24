@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import asyncio
 import logging
 from copy import copy
 from functools import lru_cache
@@ -23,6 +24,7 @@ from .xml_utils import (
     squash_xml_to_text,
 )
 from .templates.exercise_template import EXERCISE_TEMPLATE
+from .async_job_queue import AsyncJobQueue
 
 logger = logging.getLogger("nebu")
 
@@ -38,12 +40,7 @@ def etree_to_content(etree_, strip_root_node=False):
     return etree.tostring(etree_)  # pragma: no cover
 
 
-def fetch_insert_includes(
-    document, page_uuids, includes, threads=20
-):
-    import asyncio
-    from .async_job_queue import AsyncJobQueue
-
+def fetch_insert_includes(document, page_uuids, includes, threads=20):
     async def async_exercise_fetching():
         loop = asyncio.get_running_loop()
         for match, proc in includes:
@@ -53,7 +50,7 @@ def fetch_insert_includes(
                     q.put_nowait(
                         loop.run_in_executor(None, proc, elem, page_uuids)
                     )
-            if job_queue.errors:
+            if len(job_queue.errors) != 0:
                 raise Exception(
                     "The following errors occurred: " +
                     ", ".join(str(e) for e in job_queue.errors)
