@@ -50,13 +50,15 @@ def fetch_insert_includes(
             job_queue = AsyncJobQueue(threads)
             async with job_queue as q:
                 for elem in xpath_html(document.content, match):
-                    q.put_nowait(loop.run_in_executor(None, proc, elem, page_uuids))
+                    q.put_nowait(
+                        loop.run_in_executor(None, proc, elem, page_uuids)
+                    )
             if job_queue.errors:
                 raise Exception(
                     "The following errors occurred: " +
                     ", ".join(str(e) for e in job_queue.errors)
                 )
-    
+
     asyncio.run(async_exercise_fetching())
 
 
